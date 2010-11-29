@@ -243,7 +243,9 @@ class PyMark:
 		
 		self.num_compiles = len(self.modules)
 		
-		for name in self.modules.keys():
+		keys = self.modules.keys()
+		keys.reverse()
+		for name in keys:
 			self.compileModule(name)
 		
 		if self.compile_errors > 0:
