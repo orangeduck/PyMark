@@ -1,0 +1,19 @@
+PyMark is flexible and fast a markup langauge which piggybacks off python's native types implementation.
+
+Marked up data compiles to binary, which can be read fast and effectively.
+In the "Classes" folder are various implentations of readers in different programming languages. 
+
+PyMark supports the following native types:
+
+	+ List
+	+ Dictionary
+	+ Tuple
+	+ String
+	+ Int
+	+ Float
+
+And through various interpriter tricks can also do:
+
+	- Constants
+	- Flags
+	- References

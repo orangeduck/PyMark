@@ -22,6 +22,23 @@ LONG 			= 10
 FLOAT 			= 11
 DOUBLE			= 12
 
+def isCollection(o):
+	t = type(o)
+	return (t == types.ListType) or (t == types.DictType) or (t == types.TupleType)
+	
+def isConstantType(o): # Contains all the main types other than dictionary.
+	t = type(o)
+	return (t == types.ListType) or (t == types.TupleType) or (t == types.StringType) or (t == types.IntType) or (t == types.FloatType) or (t == types.LongType)
+
+def isBuiltInObject(o):
+	try:
+		if (o[0] == '_') and (o[1] == '_'):
+			return True
+		else:
+			return False
+	except:
+		return False
+	
 def typeLookup(o):
 	"""
 	Looks up the type index of an object.
@@ -121,13 +138,14 @@ class PyMark:
 		Inits path variables.
 		Constructs "compiled" directory if it does not exist.
 		"""
-		self.path = os.getcwd()
+		self.path = sys.path[0]
 		self.compile_path = self.path+"/Compiled"
 		
 		if not os.path.exists(self.compile_path):
 			os.mkdir(self.compile_path)
 		
 		self.modules = {}
+		self.constants = {}
 		
 		self.num_imports = 0
 		self.num_compiles = 0
@@ -147,7 +165,7 @@ class PyMark:
 		TODO: Allow user regular expression for blocking files.
 		"""
 		
-		block_list = ["PyMark"]
+		block_list = ["PyMark","Util"]
 		file_strings = os.listdir(self.path)
 		file_pairs = map(lambda x: os.path.splitext(x), file_strings )
 		file_pairs = filter(lambda x: (x[1] == ".py") and not(x[0] in block_list ) , file_pairs)
@@ -159,10 +177,10 @@ class PyMark:
 		"""
 		Tries to import a module of a given name.
 		"""
-		print "Importing Module \""+name+"\" ..."
+		print "Importing Module \""+name+"\""
 		
 		try:
-			module = __import__(name)
+			module = __import__(name,[],locals())
 			self.modules[name] = module
 		except StandardError as error:
 			print "ERROR: Could not import module \""+name+"\" :: "+str(error)
@@ -194,23 +212,49 @@ class PyMark:
 		print ""
 		print "Imported "+str(self.imported)+" out of "+str(self.num_imports)+" modules."
 		
+	def compileModuleConstants(self,import_dict,name):
+		"""
+		Constants are native type objects in the module that are not the main object.
+		These are stored in a special "constants" dictionary in case they need to be used later.
+		Constants can be all the natively supported objects other than dictionaries.
+		This is because allowing dictionaries lead to cyclic imports when searching - must note that __dict__ is really a bit of a hack and not meant for these things.
+		"""	
+		
+		try:
+			constant_dict = {}
+			for k, v in import_dict.iteritems():
+				if isConstantType(v) and not(isBuiltInObject(k)):
+					constant_dict[k] = v
+			
+			if len(constant_dict) > 0:
+				self.constants[name] = {}
+				for k, v in constant_dict.iteritems():
+					if k != name:
+						self.constants[name][k] = v
+		except StandardError as error:
+			print "WARNING: could not build constants for object \""+name+"\" : "+str(error)
+			self.compile_errors = self.compile_errors + 1	
+		
 	def compileModule(self,name):
 		"""
 		Tries to compile a module.
 		"""
 		
 		module = self.modules[name]
-		print "Compiling Module \""+name+"\" ..."
+		print "Compiling Module \""+name+"\""
+		
+		import_dict = module.__dict__
+		
+		self.compileModuleConstants(import_dict,name)
 		
 		try:
-			data = module.__dict__[name]
+			data = import_dict[name]
 		except:
 			print "ERROR: module \""+name+"\" contains no object called \""+name+"\" to compile!"
 			self.compile_errors = self.compile_errors + 1
 			return
 		
-		first_order_types = [types.ListType,types.DictType,types.TupleType]
-		if not(type(data) in first_order_types):
+		if not(isCollection(data)):
 			print "ERROR: object \""+name+"\" is of type "+str(type(data.__name__))+". Module objects must be of type List, Dict or Tuple."
 			self.compile_errors = self.compile_errors +1
 			return
@@ -227,7 +271,7 @@ class PyMark:
 			f.write(compilestring)
 			f.close()
 		except StandardError as error:
-			print "ERROR: unable to open file \""+name+".pm\" for writing: "+str(error)
+			print "ERROR: could not write to file \""+name+".pm\": "+str(error)
 			self.compile_errors = self.compile_errors +1
 			return
 		
@@ -257,7 +301,30 @@ class PyMark:
 		print ""
 		print "Compiled "+str(self.compiled)+" out of "+str(self.num_compiles)+" modules."
 		
-	def run(self,modules):
+	def compileConstants(self):
+		"""
+		Tries to compile constants.
+		"""
+		
+		print "Compiling Constants..."
+		
+		data = self.constants
+		
+		try:
+			compilestring = compileObject(data)
+		except StandardError as error:
+			print "ERROR: could not compile constants : "+str(error)
+			return
+		
+		try:
+			f = open(self.compile_path+"/constants.pm",'w')
+			f.write(compilestring)
+			f.close()
+		except StandardError as error:
+			print "ERROR: unable to open file constants.pm\" for writing: "+str(error)
+			return
+		
+	def run(self,args):
 		
 		print ""
 		print "______________________________"
@@ -267,10 +334,10 @@ class PyMark:
 		print "______________________________"
 		print ""
 		
-		if modules == []:
+		if args.modules == []:
 			self.importAllModules()
 		else:
-			modules = map(lambda x : os.path.splitext(x)[0], modules) # We don't mind if the args are supplied with or without .py extension
+			modules = map(lambda x : os.path.splitext(x)[0], args.modules) # We don't mind if the args are supplied with or without .py extension
 			for name in modules:
 				self.importModule(name)
 		
@@ -278,8 +345,15 @@ class PyMark:
 		print "______________________________"
 		print ""
 		self.compileAllModules()
-
-
+		print ""
+		if (args.modules == []) or args.constants:
+			self.compileConstants()
+		print "______________________________"
+		print ""
+		print "            Done"
+		print "______________________________"
+		print ""
+		
 """
 Parsing the args here
 
@@ -288,7 +362,8 @@ Can be supplied with a list of modules. Otherwise if given blank list then just 
 
 parser = argparse.ArgumentParser(description='Compile .py files using PyMark')
 parser.add_argument('modules', metavar='M', nargs='*',help='A list of modules to compile')
+parser.add_argument('-c','--constants',action="store_true",help='When given a list of modules to compile, PyMark will not by default recompile the constants file, as it would produce a file only containing constants of those modules chosen to be recompiled. This argument allows you to force the program to recompile the constants file.')
 args = parser.parse_args(sys.argv[1::])
 
 pymark = PyMark()
-pymark.run(args.modules)
+pymark.run(args)
