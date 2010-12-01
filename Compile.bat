@@ -4,6 +4,6 @@ python PyMark.py
 echo.
 echo ______________________________
 echo.
-echo Modules have been compiled
+echo PyMark finished
 echo Press any key to exit. . .
 pause>nul

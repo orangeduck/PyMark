@@ -1,19 +1,42 @@
-PyMark is flexible and fast a markup langauge which piggybacks off python's native types implementation.
+PyMark is flexible and fast a markup langauge implementation which piggybacks off python's native types.
 
-Marked up data compiles to binary, which can be read fast and effectively.
+____________________________________________________
+
+Marked up data compiles to binary, which can be read fast and effectively. It also means that syntax is checked.
 In the "Classes" folder are various implentations of readers in different programming languages. 
 
 PyMark supports the following native types:
 
-	+ List
-	+ Dictionary
-	+ Tuple
-	+ String
-	+ Int
-	+ Float
+	+ Lists
+	+ Dictionaries
+	+ Tuples
+	+ Strings
+	+ Ints
+	+ Floats
 
 And through various interpriter tricks can also do:
 
 	- Constants
 	- Flags
 	- References
+
+____________________________________________________
+
+
+PyMark is not:
+
+	~ Really a markup language ~
+	
+		At least not like XML. It's more of a easy way of building objects which can be parsed quickly and easily by an external program
+		
+	~ Meant to be machine written ~
+	
+		Again, unlike XML, PyMark is meant to be written by humans - and it is designed with that in mind.
+		Because of this, it isn't meant to be read by machine either. That's what the binary compilation is for.
+		Errors are checked for at compile time - the machine readable version of the data *should* work. People who have tried to parse XML should appreciate this.
+		
+	~ Strict ~
+	
+		PyMark recognizes that humans make mistakes - in particular when entering a lot of data. Because of this errors wont break the whole system.
+		There is no static typing - it wouldn't help much anyway as data produced is meant to be loaded at run time rather than compile time.
+		There are many, many different ways in which you can stucture your data. PyMark doesn't force you to use one way or the other. You can enter the data how best suites you.

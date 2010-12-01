@@ -2,18 +2,23 @@
 List of some Utilities for PyMark including References, Flags etc.
 """
 
+REF_PREFIX = "*PYMARK-REFERENCE*"
+
 def R(string): return Reference(string)
 def Ref(string): return Reference(string)
 def Reference(string):
 	"""
-	It isn't smart but I never said it was. Just appends \x01 and a * to the front of a string for identification later.
-	No user strings should be using \x01 - at least I hope..
+	It isn't smart but I never said it was. Just appends some prefix to the front of a string for identification later.
+	No user strings should be using that particular prefix...at least I hope not.
 	"""
-	return "\x01*"+string
+	return REF_PREFIX+string
 
 def F(size): return Flagset(size)
 def Flags(size): return Flagset(size)	
 def Flagset(size):
+	"""
+	Returns list of powers of two - for binary encoded flags. These flags are possible to pull out again using the constants file.
+	"""
 	list = []
 	i = 0
 	while i < size:
@@ -40,6 +45,8 @@ def Enum(size):
 	return list
 	
 	
+# Other unimportant functions below ...	
+
 def isInt(n):
 	try:
 		int(n)

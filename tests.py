@@ -1,4 +1,4 @@
-from Util import *
+from PyMark.Util import *
 
 awesome, red, dog_shaped = Flags(3)
 
@@ -11,7 +11,7 @@ tests = {
 		"Material3",
 		awesome|red,
 		RED,
-		R("examples.example1")
+		R("examples.example2.1")
 		),
 		
 	"second entry":(
@@ -29,6 +29,6 @@ tests = {
 		"Blahhh",
 		red|dog_shaped|awesome,
 		GREEN,
-		R("examples.example1")
+		R("examples.example2.3")
 		),
 }
