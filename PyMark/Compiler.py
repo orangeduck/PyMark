@@ -133,9 +133,9 @@ def compileObject(o):
 	elif t == LONG_TUPLE:
 		return pack('>B',t) + pack('>L',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
 	elif t == STRING:
-		return pack('>B',t) + pack('>H',len(o.encode("ascii"))) + o.encode("ascii")
+		return pack('>B',t) + pack('>H',len(o)) + o
 	elif t == LONG_STRING:
-		return pack('>B',t) + pack('>L',len(o.encode("ascii"))) + o.encode("ascii")
+		return pack('>B',t) + pack('>L',len(o)) + o
 	elif t == INT:
 		return pack('>B',t) + pack('>H',o)
 	elif t == FLOAT:
@@ -277,10 +277,12 @@ class Compiler:
 		Constants can be all the natively supported objects.
 		"""	
 		
+		constantBlockList = ["REF_PREFIX"]
+		
 		try:
 			constant_dict = {}
 			for k, v in import_dict.iteritems():
-				if isConstantType(v) and not(isBuiltInObject(k)) and k != name:
+				if isConstantType(v) and not(isBuiltInObject(k)) and k != name and not(k in constantBlockList) :
 					constant_dict[k] = v
 			
 			if len(constant_dict) > 0:
@@ -314,7 +316,7 @@ class Compiler:
 			return
 		
 		try:
-			f = open(self.compile_path+"/"+name+".pm",'w')
+			f = open(self.compile_path+"/"+name+".pm",'wb')
 			f.write(compilestring)
 			f.close()
 		except StandardError as error:
@@ -367,6 +369,8 @@ class Compiler:
 		
 		data = self.constants
 		
+		print data
+		
 		try:
 			compilestring = compileObject(data)
 		except StandardError as error:
@@ -374,7 +378,7 @@ class Compiler:
 			return
 		
 		try:
-			f = open(self.compile_path+"/constants.pm",'w')
+			f = open(self.compile_path+"/constants.pm",'wb')
 			f.write(compilestring)
 			f.close()
 		except StandardError as error:

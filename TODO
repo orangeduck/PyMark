@@ -4,19 +4,15 @@
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-1. References/Pointers
-
-	The C# code needs to load them.
-	Other than that I believe we are done.
+* Test if the C# implentation of references work. Otherwise refactor as best you can. Version control can save you if you fuck up.
 	
-2. Will need some bugfixing
+* Will need some bugfixing
 
-3. Start of documentation?
+* Python loader class. Some other classes would be nice too.
+	How nice would it be to write a loader in C or C++ !!
 
-4. Python loader class. Some other classes would be nice too.
-
-5. More classes of course
-
-6. The documentation - a quickstart document at least.
+* The documentation - a quickstart document at least.
 	Also a document of the specification of the binary format would be good.
+	
+* Any other bright ideas?
+	Some utility functions for pulling out flags?

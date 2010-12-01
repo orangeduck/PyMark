@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
@@ -13,11 +14,16 @@ using System.IO;
 /// 
 ///     1. Not type Strong
 ///         + Because this is dynamic construction of objects, we don't know the types at compile time. So it isn't (easily) possible to construct type data at run time. Not in a useful way anyway.
-///         + This means that the whole thing isn't type strong. Which isn't so bad, as the philosophy of PyMark is not of something in that vein.
+///         + This means that the whole thing isn't type strong. Which isn't so bad I suppose.
 ///         + Either way - some smart downcasts by the user programmer should work fine. He/She should have some idea of the data that is coming in as.
 ///     2. No real implementation of a Tuple.
 ///         + C# supports things which represent pairs, but a N-Dimensional Tuple is not embedded in the language - and I only wanted to use native types where possible.
 ///         + So instead we are simply using a List of Objects. Which works ok... I did not want to provide a library of propriatory classes for each langauge.
+///     3. References
+///         + Man I don't even know if its working or if I've just gone and done a clone rather than a reference. Something happens anyway.
+///         + Either way it was a bitch - because enumerating over dictionaries isn't allow if you're planning on changing the values.
+///         + If you prefer, just don't call the "BuildReferences" function and you'll have pseudo references in the form of Lists. It was automating the construction where things got complicated.
+///         + I'm thinking at some point it might be worth refactoring anyway - adding Reference objects to a list in the class - then making parts of the modules point at that (keep it explicit we want these things to not be value variables) 
 ///         
 /// </remarks>
 class PyMarkLoader
@@ -66,6 +72,7 @@ class PyMarkLoader
     public const short LONG         = 10;
     public const short FLOAT        = 11;
     public const short DOUBLE       = 12;
+    public const short REFERENCE    = 13;
 
     /// <summary>
     /// Builds the PyMarkLoader object.
@@ -96,6 +103,16 @@ class PyMarkLoader
         log = "";
     }
 
+    class Reference
+    {
+        public Queue<Object> linkList;
+
+        public Reference(Queue<Object> _linkList)
+        {
+            linkList = _linkList;
+        }
+    }
+
     /// <summary>
     /// Reloades which modules are in the compiled directory avaliable to load.
     /// </summary>
@@ -116,7 +133,7 @@ class PyMarkLoader
     /// Recompiles the module .py source files by running PyMark.py,
     /// Assumes that python is installed and the PATH variable is set correctly.
     /// </summary>
-    public String RecompileAll()
+    public String Compile()
     {
         String output;
         try
@@ -148,7 +165,7 @@ class PyMarkLoader
     /// Recompiles a list of module .py source files by running PyMark.py,
     /// Assumes that python is installed and the PATH variable is set correctly.
     /// </summary>
-    public String RecompileModules(List<String> modules)
+    public String CompileModules(List<String> modules,String flags)
     {
         String output;
 
@@ -162,7 +179,7 @@ class PyMarkLoader
         {
             Process p = new Process();
             p.StartInfo.FileName = "python";
-            p.StartInfo.Arguments = "\"" + path + "\\PyMark.py" + modulesString + "\"";
+            p.StartInfo.Arguments = "\"" + path + "\\PyMark.py\" " + modulesString + " " + flags;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.Start();
@@ -204,7 +221,7 @@ class PyMarkLoader
         }
         catch (Exception e)
         {
-            LogMsg("ERROR: Could not data for module \"" + name + "\": " + e.ToString() + "");
+            LogMsg("ERROR: Could not load data for module \"" + name + "\": " + e.ToString() + "");
             return;
         }
 
@@ -218,13 +235,18 @@ class PyMarkLoader
     /// <summary>
     /// Loads all modules
     /// </summary>
-    public void loadAllModules()
+    public void Load()
     {
         LogMsg("Loading All Modules...");
         foreach (String name in moduleNames)
         {
             LoadModule(name);
         }
+    }
+
+    private Object FollowReference(Object o, List<Object> links)
+    {
+        return new Object();
     }
 
     /// <summary>
@@ -301,6 +323,22 @@ class PyMarkLoader
 
             return retObject;
         }
+        else if (type == REFERENCE)
+        {
+            Queue<Object> refList = new Queue<Object>();
+            int len = readInt(stream);
+
+            for (int i = 0; i < len; i++)
+            {
+                refList.Enqueue(CompileObject(stream));
+            }
+
+            Reference retRef = new Reference(refList);
+            Object retObject = new Object();
+            retObject = retRef;
+
+            return retObject;
+        }
         else if (type == STRING)
         {
             return readString(stream);
@@ -328,6 +366,89 @@ class PyMarkLoader
         else
         {
             throw new Exception("Unidentified type index:" + type + " Perhaps a badly formed .pm file?");
+        }
+    }
+
+    public void BuildReferences()
+    {
+        Dictionary<String, Object> newModules = new Dictionary<String, Object>();
+        foreach (String key in modules.Keys)
+        {
+            newModules[key] = FollowReferences(modules[key]);
+        }
+        modules = newModules;
+    }
+
+    private Object FollowReferences(Object o)
+    {
+        if (o is List<Object>)
+        {
+            List<Object> castDown = (List<Object>)o;
+
+            for (int i = 0; i < castDown.Count; i++)
+            {
+                castDown[i] = FollowReferences(castDown[i]);
+            }
+
+            return castDown;
+        }
+        else if (o is Dictionary<Object, Object>)
+        {
+            Dictionary<Object, Object> castDown = (Dictionary<Object, Object>)o;
+            Dictionary<Object, Object> newDict = new Dictionary<Object, Object>();
+
+            foreach (String key in castDown.Keys)
+            {
+                newDict[key] = FollowReferences(castDown[key]);
+            }
+
+            return newDict;
+        }
+        else if (o is Reference)
+        {
+            Reference castDown = (Reference)o;
+
+            // The first step down from modules must be done here, because it uses a Dictionary<String,Object> rather than a Dictionary<Object,Object> - and that fucks up the casts.
+            Object nextObject = modules[(String)castDown.linkList.Dequeue()];
+            o = BuildReference(castDown.linkList, nextObject);
+
+            return o;
+        }
+        else
+        {
+            return o;
+        }
+
+    }
+
+    private Object BuildReference(Queue<Object> linkList, Object o)
+    {
+        Object key = linkList.Dequeue();
+
+        Object nextObject;
+        if (key is String)
+        {
+            Dictionary<Object, Object> currentObject = (Dictionary<Object, Object>)o;
+            nextObject = currentObject[(String)key];
+        }
+        else if (key is int)
+        {
+            List<Object> currentObject = (List<Object>)o;
+            nextObject = currentObject[(int)key];
+        }
+        else
+        {
+            // ERROR
+            nextObject = 0;
+        }
+
+        if (linkList.Count > 0)
+        {
+            return BuildReference(linkList, nextObject);
+        }
+        else
+        {
+            return nextObject;
         }
     }
 
