@@ -21,8 +21,8 @@ INT 			= 9
 LONG 			= 10
 FLOAT 			= 11
 DOUBLE			= 12
-# And now for hacked in objects. Be warned!
 REFERENCE		= 13
+NULL			= 14
 
 def isCollection(o):
 	t = type(o)
@@ -71,6 +71,7 @@ def typeLookup(o):
 	if t == types.IntType:		return INT
 	if t == types.FloatType:	return FLOAT
 	if t == types.LongType:		return LONG
+	if t == types.NoneType:		return NULL
 	
 	raise StandardError("Unrecognized object of type \""+str(t.__name__)+"\". I don't know how to compile this!")
 
@@ -91,6 +92,13 @@ def compileReference(o):
 	o = ref_lookup
 	
 	return pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+	
+def compileList(o):
+	
+	if len(o) == 0:
+		return pack('>H',0)
+	else:
+		return pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
 	
 def compileObject(o):
 	"""
@@ -121,17 +129,17 @@ def compileObject(o):
 
 	
 	if t == LIST:
-		return pack('>B',t) + pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+		return pack('>B',t) + compileList(o)
 	elif t == LONG_LIST:
-		return pack('>B',t) + pack('>L',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+		return pack('>B',t) + compileList(o)
 	elif t == DICT:
-		return pack('>B',t) + pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o.items() ) )
+		return pack('>B',t) + compileList(o.items())
 	elif t == LONG_DICT:
-		return pack('>B',t) + pack('>L',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o.items() ) )
+		return pack('>B',t) + compileList(o.items())
 	elif t == TUPLE:
-		return pack('>B',t) + pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+		return pack('>B',t) + compileList(o)
 	elif t == LONG_TUPLE:
-		return pack('>B',t) + pack('>L',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+		return pack('>B',t) + compileList(o)
 	elif t == STRING:
 		return pack('>B',t) + pack('>H',len(o)) + o
 	elif t == LONG_STRING:
@@ -143,7 +151,9 @@ def compileObject(o):
 	elif t == DOUBLE:
 		return pack('>B',t) + pack('>d',o)
 	elif t == REFERENCE:
-		return pack('>B' ,t) + compileReference(o)
+		return pack('>B',t) + compileReference(o)
+	elif t == NULL:
+		return pack('>B',t)
 	
 class Compiler:
 	"""
@@ -369,8 +379,6 @@ class Compiler:
 		
 		data = self.constants
 		
-		print data
-		
 		try:
 			compilestring = compileObject(data)
 		except StandardError as error:
@@ -429,7 +437,19 @@ class Compiler:
 		else:
 			return	
 	
+	def clearCompileDirectory(self):
+		"""
+		Clears the Compiled directory of .pm files.
+		"""
+		
+		file_strings = os.listdir(self.path+"/Compiled")
+		for name in file_strings:
+			if re.match(r"^.*\.pm$",name):
+				os.remove(self.path+"/Compiled/"+name)
+		
 	def run(self,args):
+		
+		self.args = args
 		
 		print ""
 		print "______________________________"
@@ -449,6 +469,9 @@ class Compiler:
 		print ""
 		print "______________________________"
 		print ""
+		
+		if (args.modules == [] or args.wipe):
+			self.clearCompileDirectory()
 		
 		self.compileAllModules()
 		print ""

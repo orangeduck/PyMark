@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -18,41 +19,49 @@ using System.IO;
 ///         + Either way - some smart downcasts by the user programmer should work fine. He/She should have some idea of the data that is coming in as.
 ///     2. No real implementation of a Tuple.
 ///         + C# supports things which represent pairs, but a N-Dimensional Tuple is not embedded in the language - and I only wanted to use native types where possible.
-///         + So instead we are simply using a List of Objects. Which works ok... I did not want to provide a library of propriatory classes for each langauge.
+///         + So instead we are simply using a ArrayList. Which works ok... I did not want to provide a library of propriatory classes for each langauge.
 ///     3. References
-///         + Man I don't even know if its working or if I've just gone and done a clone rather than a reference. Something happens anyway.
-///         + Either way it was a bitch - because enumerating over dictionaries isn't allow if you're planning on changing the values.
-///         + If you prefer, just don't call the "BuildReferences" function and you'll have pseudo references in the form of Lists. It was automating the construction where things got complicated.
-///         + I'm thinking at some point it might be worth refactoring anyway - adding Reference objects to a list in the class - then making parts of the modules point at that (keep it explicit we want these things to not be value variables) 
+///         + As you may have expected, C# really doesn't like the idea of data loaded at runtime being able to point somewhere in memory.
+///         + Of course it isn't as simple as that, but that is in essence the problem.
+///         + So I've added a middle-man class called "Reference", which can be used to lookup data elsewhere in the module without large amounts of data copying.
+///         + Though it is fairly hard to actually edit data inside Hashtables and ArrayLists - so good luck with making much use of it anyway.
 ///         
 /// </remarks>
 class PyMarkLoader
 {
 
     String path;
-    List<String> moduleNames;
-    Dictionary<String,Object> modules;
-    String log;
-
     /// <summary>
-    /// A Log of the PyMark Loader.
+    /// The path to the directory in which PyMark.py is located.
     /// </summary>
-    public String Log
+    public String Path
     {
-        get { return log; }
+        get { return path;}
+        set {path = value;}
     }
 
     /// <summary>
-    /// The names of modules possible to load.
+    /// The names of modules possible to load (in the Compiled directory).
     /// </summary>
-    public List<String> ModuleNames
+    public ArrayList ModuleNames
     {
-        get { return moduleNames; }
+        get
+        {
+            List<String> files = Directory.GetFiles(Path + "\\compiled").ToList();
+            ArrayList names = new ArrayList();
+            foreach (String file in files)
+            {
+                names.Add(System.IO.Path.GetFileNameWithoutExtension(file));
+            }
+            return names;
+        }
     }
+
+    Hashtable modules;
     /// <summary>
     /// A Dictionary of the modules currently loaded.
     /// </summary>
-    public Dictionary<String, Object> Modules
+    public Hashtable Modules
     {
         get { return modules;  }
     }
@@ -73,71 +82,109 @@ class PyMarkLoader
     public const short FLOAT        = 11;
     public const short DOUBLE       = 12;
     public const short REFERENCE    = 13;
+    public const short NULL         = 14;
 
     /// <summary>
-    /// Builds the PyMarkLoader object.
+    /// Class representing an internal unlinked reference.
     /// </summary>
-    /// <param name="_path">Path to the PyMark directory (Where PyMark.py is located and the .py modules)</param>
+    public class Reference
+    {
+        public Queue linkList;
+        private Hashtable domain;
+
+        public Reference(Queue _linkList, Hashtable _domain)
+        {
+            linkList = _linkList;
+            domain = _domain;
+        }
+
+        public Object Lookup()
+        {
+            try
+            {
+                Queue listCopy = new Queue(linkList);
+                Object o = LookupReference(listCopy, domain);
+                return o;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private Object LookupReference(Queue linkList, Object o)
+        {
+            Object key = linkList.Dequeue();
+
+            Object nextObject;
+            if (key is String)
+            {
+                Hashtable currentObject = (Hashtable)o;
+                nextObject = currentObject[(String)key];
+            }
+            else if (key is int)
+            {
+                ArrayList currentObject = (ArrayList)o;
+                nextObject = currentObject[(int)key];
+            }
+            else
+            {
+                return null;
+            }
+
+            if (linkList.Count > 0)
+            {
+                return LookupReference(linkList, nextObject);
+            }
+            else
+            {
+                return nextObject;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds a PyMarkLoader.
+    /// </summary>
+    /// <param name="_path">Path to the PyMark directory (where PyMark.py is located).</param>
     public PyMarkLoader(String _path)
     {
         path = _path;
-        LoadModuleNames();
-        modules = new Dictionary<String, Object>();
+        modules = new Hashtable();
+
+        ClearLog();
         LogMsg("PyMarkLoader constructed");
     }
 
-    /// <summary>
-    /// Writes a string to the internal log.
-    /// </summary>
-    /// <param name="s">String to write to log</param>
     void LogMsg(String s)
     {
-        log += s + "\n";
+        StreamWriter sw;
+        sw = File.AppendText(path + @"\Logs\Csharp_Loader.log");
+        sw.WriteLine(s);
+        sw.Close();
     }
 
     /// <summary>
-    /// Clears the internal log data.
+    /// Clears the log located at: \Logs\Csharp_Loader.log
     /// </summary>
     public void ClearLog()
     {
-        log = "";
-    }
-
-    class Reference
-    {
-        public Queue<Object> linkList;
-
-        public Reference(Queue<Object> _linkList)
-        {
-            linkList = _linkList;
-        }
+        StreamWriter sw;
+        sw = File.CreateText(path + @"\Logs\Csharp_Loader.log");
+        sw.WriteLine("");
+        sw.Close();
     }
 
     /// <summary>
-    /// Reloades which modules are in the compiled directory avaliable to load.
+    /// Recompiles the module source files by running PyMark.py, assumes that python is installed and the PATH variable is set correctly.
     /// </summary>
-    void LoadModuleNames()
-    {
-        List<String> files = Directory.GetFiles(path + "\\compiled").ToList();
-
-        moduleNames = new List<String>();
-        foreach (String file in files)
-        {
-            moduleNames.Add(Path.GetFileNameWithoutExtension(file));
-        }
-
-        LogMsg("Module Names Reloaded");
-    }
-
-    /// <summary>
-    /// Recompiles the module .py source files by running PyMark.py,
-    /// Assumes that python is installed and the PATH variable is set correctly.
-    /// </summary>
-    public String Compile()
+    public void Compile()
     {
         String output;
         try
         {
+            LogMsg("Compiling all modules...");
+
             Process p = new Process();
             p.StartInfo.FileName = "python";
             p.StartInfo.Arguments = "\"" + path + "\\PyMark.py\"";
@@ -146,7 +193,10 @@ class PyMarkLoader
             p.Start();
 
             output = p.StandardOutput.ReadToEnd();
-            LogMsg("Module souce files recompiled");
+
+            LogMsg("\n>>>>>");
+            LogMsg(output);
+            LogMsg(">>>>>\n");
         }
         catch (Exception e)
         {
@@ -154,18 +204,14 @@ class PyMarkLoader
             LogMsg(errorString);
             output = errorString;
         }
-
-        /* Reload module names after recompile */
-        LoadModuleNames();
-
-        return output;
     }
 
     /// <summary>
-    /// Recompiles a list of module .py source files by running PyMark.py,
-    /// Assumes that python is installed and the PATH variable is set correctly.
+    /// Recompiles a list of modules by running PyMark.py, assumes that python is installed and the PATH variable is set correctly.
     /// </summary>
-    public String CompileModules(List<String> modules,String flags)
+    /// <param name="modules">Modules to be compiled.</param>
+    /// <param name="flags">Flag string to send to PyMark.py</param>
+    public void CompileModules(ArrayList modules,String flags)
     {
         String output;
 
@@ -177,6 +223,8 @@ class PyMarkLoader
         
         try
         {
+            LogMsg("Compiling modules: " + modulesString + "...");
+
             Process p = new Process();
             p.StartInfo.FileName = "python";
             p.StartInfo.Arguments = "\"" + path + "\\PyMark.py\" " + modulesString + " " + flags;
@@ -186,6 +234,10 @@ class PyMarkLoader
 
             output = p.StandardOutput.ReadToEnd();
             LogMsg("Module souce files recompiled");
+
+            LogMsg("\n>>>>>");
+            LogMsg(output);
+            LogMsg(">>>>>\n");
         }
         catch (Exception e)
         {
@@ -193,43 +245,41 @@ class PyMarkLoader
             LogMsg(errorString);
             output = errorString;
         }
-
-        /* Reload module names after recompile */
-        LoadModuleNames();
-
-        return output;
     }
 
     /// <summary>
-    /// Loads an individual module. Will replace any existing module with the same name.
+    /// Loads a list of modules.
     /// </summary>
-    /// <param name="name">name of the module to load</param>
-    public void LoadModule(String name)
+    /// <param name="name">Names of module to load</param>
+    public void LoadModules(ArrayList names)
     {
-        LogMsg("Loading Module \"" + name + "\"...");
-        if (!moduleNames.Contains(name))
+        foreach (String name in names)
         {
-            LogMsg("ERROR: Module \"" + name + "\" not in module names list!");
-            return;
-        }
-        FileStream stream;
-        try
-        {
-            String filename = "" + path + "\\compiled\\" + name + ".pm";
-            stream = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            
-        }
-        catch (Exception e)
-        {
-            LogMsg("ERROR: Could not load data for module \"" + name + "\": " + e.ToString() + "");
-            return;
-        }
+            LogMsg("Loading Module \"" + name + "\"...");
+            if (!ModuleNames.Contains(name))
+            {
+                LogMsg("ERROR: Module \"" + name + "\" not in module names list!");
+                return;
+            }
+            FileStream stream;
+            try
+            {
+                String filename = "" + path + "\\compiled\\" + name + ".pm";
+                stream = new FileStream(filename, FileMode.Open, FileAccess.Read);
 
-        Object module = CompileObject(stream);
+            }
+            catch (Exception e)
+            {
+                LogMsg("ERROR: Could not load data for module \"" + name + "\": " + e.ToString() + "");
+                return;
+            }
 
-        stream.Close();
+            Object module = CompileObject(stream);
 
-        modules[name] = module;
+            stream.Close();
+
+            modules[name] = module;
+        }
     }
 
     /// <summary>
@@ -238,26 +288,62 @@ class PyMarkLoader
     public void Load()
     {
         LogMsg("Loading All Modules...");
-        foreach (String name in moduleNames)
+        LoadModules(ModuleNames);
+    }
+
+
+    /// <summary>
+    /// Links all Reference objects in the modules to where they point to.
+    /// </summary>
+    public void LinkReferences()
+    {
+        object[] keyList = new object[modules.Count];
+        modules.Keys.CopyTo(keyList, 0);
+        for (int i = 0; i < keyList.Length; i++)
         {
-            LoadModule(name);
+            var key = keyList[i];
+            modules[key] = FollowReferences(modules[key]);
         }
     }
 
-    private Object FollowReference(Object o, List<Object> links)
+    private Object FollowReferences(Object o)
     {
-        return new Object();
+        if (o is ArrayList)
+        {
+            ArrayList castDown = (ArrayList)o;
+
+            for (int i = 0; i < castDown.Count; i++)
+            {
+                castDown[i] = FollowReferences(castDown[i]);
+            }
+
+            return castDown;
+        }
+        else if (o is Hashtable)
+        {
+            Hashtable castDown = (Hashtable)o;
+            object[] keyList = new object[castDown.Count];
+            castDown.Keys.CopyTo(keyList, 0);
+            for (int i = 0; i < keyList.Length; i++)
+            {
+                var key = keyList[i];
+                castDown[key] = FollowReferences(castDown[key]);
+            }
+
+            return castDown;
+        }
+        else if (o is Reference)
+        {
+            Reference o_ref = (Reference)o;
+            return o_ref.Lookup();
+        }
+        else
+        {
+            return o;
+        }
+
     }
 
-    /// <summary>
-    /// Compiles the next object in the data stream.
-    /// </summary>
-    /// <remarks>
-    /// Notice that the objects returned are of the class Object. This is because their type cannot be determined at compile time.
-    /// It is expected that user programmers will have some idea of the types of the data coming in and can downcast appropriately.
-    /// </remarks>
-    /// <param name="stream">current data stream</param>
-    /// <returns>Compiled Object</returns>
     private Object CompileObject(FileStream stream)
     {
 
@@ -265,9 +351,9 @@ class PyMarkLoader
 
         if ((type == LIST) || (type == TUPLE))
         {
-            List<Object> retObject = new List<Object>();
+            var retObject = new ArrayList();
             int len = readInt(stream);
-            
+
             for (int i = 0; i < len; i++)
             {
                 retObject.Add(CompileObject(stream));
@@ -277,7 +363,7 @@ class PyMarkLoader
         }
         else if ((type == LONG_LIST) || (type == LONG_TUPLE))
         {
-            var retObject = new List<Object>();
+            var retObject = new ArrayList();
             long len = readLong(stream);
 
             for (long i = 0; i < len; i++)
@@ -289,17 +375,17 @@ class PyMarkLoader
         }
         else if (type == DICT)
         {
-            var retObject = new Dictionary<Object, Object>();
+            var retObject = new Hashtable();
             int len = readInt(stream);
 
-            var pairList = new List<Object>();
+            var pairList = new ArrayList();
             for (int i = 0; i < len; i++)
             {
                 pairList.Add(CompileObject(stream));
             }
-            foreach (Object item in pairList)
+            foreach (ArrayList item in pairList)
             {
-                var listItem = (List<Object>)item;
+                var listItem = item;
                 retObject[listItem[0]] = listItem[1];
             }
 
@@ -307,17 +393,17 @@ class PyMarkLoader
         }
         else if (type == LONG_DICT)
         {
-            var retObject = new Dictionary<Object, Object>();
+            var retObject = new Hashtable();
             long len = readLong(stream);
 
-            var pairList = new List<Object>();
+            var pairList = new ArrayList();
             for (long i = 0; i < len; i++)
             {
                 pairList.Add(CompileObject(stream));
             }
-            foreach (Object item in pairList)
+            foreach (ArrayList item in pairList)
             {
-                var listItem = (List<Object>)item;
+                var listItem = (ArrayList)item;
                 retObject[listItem[0]] = listItem[1];
             }
 
@@ -325,19 +411,13 @@ class PyMarkLoader
         }
         else if (type == REFERENCE)
         {
-            Queue<Object> refList = new Queue<Object>();
+            Queue refList = new Queue();
             int len = readInt(stream);
-
             for (int i = 0; i < len; i++)
             {
                 refList.Enqueue(CompileObject(stream));
             }
-
-            Reference retRef = new Reference(refList);
-            Object retObject = new Object();
-            retObject = retRef;
-
-            return retObject;
+            return new Reference(refList, modules); 
         }
         else if (type == STRING)
         {
@@ -363,96 +443,17 @@ class PyMarkLoader
         {
             return readDouble(stream);
         }
+        else if (type == NULL)
+        {
+            return null;
+        }
         else
         {
             throw new Exception("Unidentified type index:" + type + " Perhaps a badly formed .pm file?");
         }
     }
 
-    public void BuildReferences()
-    {
-        Dictionary<String, Object> newModules = new Dictionary<String, Object>();
-        foreach (String key in modules.Keys)
-        {
-            newModules[key] = FollowReferences(modules[key]);
-        }
-        modules = newModules;
-    }
-
-    private Object FollowReferences(Object o)
-    {
-        if (o is List<Object>)
-        {
-            List<Object> castDown = (List<Object>)o;
-
-            for (int i = 0; i < castDown.Count; i++)
-            {
-                castDown[i] = FollowReferences(castDown[i]);
-            }
-
-            return castDown;
-        }
-        else if (o is Dictionary<Object, Object>)
-        {
-            Dictionary<Object, Object> castDown = (Dictionary<Object, Object>)o;
-            Dictionary<Object, Object> newDict = new Dictionary<Object, Object>();
-
-            foreach (String key in castDown.Keys)
-            {
-                newDict[key] = FollowReferences(castDown[key]);
-            }
-
-            return newDict;
-        }
-        else if (o is Reference)
-        {
-            Reference castDown = (Reference)o;
-
-            // The first step down from modules must be done here, because it uses a Dictionary<String,Object> rather than a Dictionary<Object,Object> - and that fucks up the casts.
-            Object nextObject = modules[(String)castDown.linkList.Dequeue()];
-            o = BuildReference(castDown.linkList, nextObject);
-
-            return o;
-        }
-        else
-        {
-            return o;
-        }
-
-    }
-
-    private Object BuildReference(Queue<Object> linkList, Object o)
-    {
-        Object key = linkList.Dequeue();
-
-        Object nextObject;
-        if (key is String)
-        {
-            Dictionary<Object, Object> currentObject = (Dictionary<Object, Object>)o;
-            nextObject = currentObject[(String)key];
-        }
-        else if (key is int)
-        {
-            List<Object> currentObject = (List<Object>)o;
-            nextObject = currentObject[(int)key];
-        }
-        else
-        {
-            // ERROR
-            nextObject = 0;
-        }
-
-        if (linkList.Count > 0)
-        {
-            return BuildReference(linkList, nextObject);
-        }
-        else
-        {
-            return nextObject;
-        }
-    }
-
-    /* Functions for parsing certain types from the file mainly simply based on how many bytes they are. */
+    /* Functions for parsing certain types from the file mainly based on how many bytes they are. */
 
     private short readShort(FileStream stream)
     {

@@ -4,8 +4,8 @@
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Test if the C# implentation of references work. Otherwise refactor as best you can. Version control can save you if you fuck up.
-	
+* Test if the C# implentation of references actually works half decently.
+
 * Will need some bugfixing
 
 * Python loader class. Some other classes would be nice too.
@@ -16,3 +16,5 @@
 	
 * Any other bright ideas?
 	Some utility functions for pulling out flags?
+	
+* Friendly syntax errors
