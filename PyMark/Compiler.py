@@ -23,14 +23,10 @@ FLOAT 			= 11
 DOUBLE			= 12
 REFERENCE		= 13
 NULL			= 14
-
-def isCollection(o):
-	t = type(o)
-	return (t == types.ListType) or (t == types.DictType) or (t == types.TupleType)
 	
-def isConstantType(o):
+def isSupportedType(o):
 	t = type(o)
-	return (t == types.ListType) or (t == types.DictType) or (t == types.TupleType) or (t == types.StringType) or (t == types.IntType) or (t == types.FloatType) or (t == types.LongType)
+	return (t == types.ListType) or (t == types.DictType) or (t == types.TupleType) or (t == types.StringType) or (t == types.IntType) or (t == types.FloatType) or (t == types.LongType) or (t == types.NoneType)
 
 def isBuiltInObject(o):
 	"""
@@ -91,7 +87,7 @@ def compileReference(o):
 			ref_lookup.append(p)
 	o = ref_lookup
 	
-	return pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+	return compileList(o)
 	
 def compileList(o):
 	
@@ -103,19 +99,20 @@ def compileList(o):
 def compileObject(o):
 	"""
 	Looks up the type of an object, and based on this decides how to compile it into bytes.
-	The algorithm is fairly simple based on recursion for larger objects.
+	The algorithm is fairly simple based on recursion for collection objects.
 	
 	The first thing that gets written is the type of the object being written
-	For lists or objects of variable length, the size is then written
+	For collections or objects of variable length, the size is then written.
 	
 	Then, for collections, the objects inside are written in turn.
 		for basic types such as int and float and string the object is simply written.
 		
-	The number of bytes used to store an item is variable. You can use the below table and the code below of size.
+	The number of bytes used to store an item is variable. You can use the below table and the code below of size and how I've used the "pack" command.
+	Almost everything should fit into 2 bytes, but just in case larger versions are supported. For example it is unlikely, but isn't unreasonable to expect a string of over size 65536.
 	
-	TODO: Improve this information.
+	Everything is stored Big Endian and if you want more specifics then you can read the python documentation here: http://docs.python.org/library/struct.html
 	
-	  pack char : num bytes : max number storeable
+	  pack char : num bytes : max int storeable
 	|----------------------------------------------|
 		B : 1 : 255
 		H : 2 : 65536
@@ -159,7 +156,7 @@ class Compiler:
 	"""
 	Main Compiler class.
 	
-	Runs in two stages.
+	Runs in three stages.
 	
 		~~ Import ~~
 	
@@ -167,14 +164,17 @@ class Compiler:
 	This means that all the modules must be well formed .py files without syntax errors.
 	Any errors on import will give a warning but the process will continue to import the other files. 
 	
-		~~ Check References ~~
+		~~ Precompile ~~
 		
-	Searches the data structures recursively for References and uses exec()
+	A few things happen here. First the module __dict__ is looked at and any objects of native data type are identified.
+	These objects are loaded into a special "constants" dictionary for compilation later.
+	
+	The module object (an object with the same name as the file) is identified and excluded from this constants dictionary.
+	The module object is then searched recurrsively for References, and these are constructed and checked with the eval() command.
 	
 		~~ Compile ~~
 	
-	Within each imported module the script looks for a object with the same name as the file.
-	This object is compiled into byte strings using compileObject() and output as a .pm file in the "compiled" directory.
+	Once we have identified the module object, this object is compiled into byte strings using compileObject() and output as a .pm file in the "Compiled" directory.
 	
 	"""
 	def __init__(self):
@@ -199,7 +199,6 @@ class Compiler:
 		self.references = 0
 		self.compiled = 0
 
-		
 		self.import_errors = 0
 		self.compile_errors = 0
 		self.compile_warnings = 0		
@@ -213,7 +212,7 @@ class Compiler:
 		TODO: Allow user regular expression for blocking files.
 		"""
 		
-		block_list = ["PyMark","Util"]
+		block_list = ["PyMark"]
 		file_strings = os.listdir(self.path)
 		file_pairs = map(lambda x: os.path.splitext(x), file_strings )
 		file_pairs = filter(lambda x: (x[1] == ".py") and not(x[0] in block_list ) , file_pairs)
@@ -231,7 +230,15 @@ class Compiler:
 			module = __import__(name,[],locals())
 			self.modules[name] = module
 		except StandardError as error:
-			print "ERROR: Could not import module \""+name+"\" :: "+str(error)
+			errortext = str(error)
+			print "ERROR: Could not import module \""+name+"\" :: "+errortext
+			
+			# Some friendly error messages.
+			if re.match(r".*callable.*",errortext):
+				print "Perhaps you're missing a ',' before a tuple?"
+			if re.match(r".*subscriptable.*",errortext):
+				print "Perhaps you're missing a ',' before a list?"
+				
 			self.import_errors = self.import_errors +1
 			return
 	
@@ -273,8 +280,8 @@ class Compiler:
 				self.compile_errors += 1
 				return
 			
-			if not(isCollection(data)):
-				print "ERROR: object \""+name+"\" is of type "+str(type(data.__name__))+". Module objects must be of type List, Dict or Tuple."
+			if not(isSupportedType(data)):
+				print "ERROR: object \""+name+"\" is of type "+str(type(data.__name__))+". Module objects must be made up of the native types."
 				self.compile_errors += 1
 				return				
 				
@@ -292,7 +299,7 @@ class Compiler:
 		try:
 			constant_dict = {}
 			for k, v in import_dict.iteritems():
-				if isConstantType(v) and not(isBuiltInObject(k)) and k != name and not(k in constantBlockList) :
+				if isSupportedType(v) and not(isBuiltInObject(k)) and k != name and not(k in constantBlockList) :
 					constant_dict[k] = v
 			
 			if len(constant_dict) > 0:
@@ -402,6 +409,9 @@ class Compiler:
 			self.compile_warnings += 1
 	
 	def checkReferences(self,o,name):
+		"""
+		Recursively looks for references in an object and if it finds one, constucts a python statement and uses eval() to see if the reference exists.
+		"""
 		t = type(o)
 		
 		if t == types.ListType:
@@ -449,7 +459,7 @@ class Compiler:
 		
 	def run(self,args):
 		
-		self.args = args
+		allModules = (args.modules == [])
 		
 		print ""
 		print "______________________________"
@@ -459,7 +469,7 @@ class Compiler:
 		print "______________________________"
 		print ""
 		
-		if args.modules == []:
+		if allModules:
 			self.importAllModules()
 		else:
 			modules = map(lambda x : os.path.splitext(x)[0], args.modules) # We don't mind if the args are supplied with or without .py extension
@@ -470,12 +480,12 @@ class Compiler:
 		print "______________________________"
 		print ""
 		
-		if (args.modules == [] or args.wipe):
+		if allModules or args.wipe:
 			self.clearCompileDirectory()
 		
 		self.compileAllModules()
 		print ""
-		if (args.modules == []) or args.constants:
+		if allModules or args.constants:
 			self.compileConstants()
 		print "______________________________"
 		print ""

@@ -13,17 +13,19 @@ ______________________________
 Importing modules...
 
 Importing Module "example_module"
+Importing Module "pets"
 
-Imported 1 out of 1 modules.
+Imported 2 out of 2 modules.
 
 ______________________________
 
 Compiling Modules...
 
+Compiling module "pets"
 Compiling module "example_module"
 
 
-Compiled 1 out of 1 modules.
+Compiled 2 out of 2 modules.
 
 Compiling Constants...
 ______________________________
@@ -37,3 +39,4 @@ ______________________________
 Loading All Modules...
 Loading Module "constants"...
 Loading Module "example_module"...
+Loading Module "pets"...

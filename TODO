@@ -4,17 +4,10 @@
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Test if the C# implentation of references actually works half decently.
-
 * Will need some bugfixing
 
 * Python loader class. Some other classes would be nice too.
 	How nice would it be to write a loader in C or C++ !!
 
-* The documentation - a quickstart document at least.
+* The documentation - 
 	Also a document of the specification of the binary format would be good.
-	
-* Any other bright ideas?
-	Some utility functions for pulling out flags?
-	
-* Friendly syntax errors

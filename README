@@ -1,11 +1,11 @@
 PyMark is flexible and fast a markup langauge implementation which piggybacks off python's native types.
 
 PyMark is aimed at solutions that require a large number and variety of human made objects.
-There are plenty of situations where this might be the case, one example being games, which often require many human designed and made objects for materials, weapons, characters, scene props, etc.
+There are plenty of situations where this might be the case, one example being game dev, which often requires many human designed and made objects for materials, weapons, characters, scene props, etc.
 ____________________________________________________
 
 Marked up data compiles to binary, which can be read fast and effectively.
-This means syntax is checked before the program (which may be slow) using the data is run.
+This means syntax is checked before the program (which may be slow to load) is run.
 In the "Classes" folder are various implentations of readers in different programming languages.
 
 PyMark supports the following native types:
@@ -16,7 +16,7 @@ PyMark supports the following native types:
 	+ Strings
 	+ Ints
 	+ Floats
-	+ None
+	+ Null
 
 And through various interpriter tricks can also do:
 
@@ -30,7 +30,7 @@ Of course the support of these types is also somewhat based on the specifics of 
 ____________________________________________________
 
 
-PyMark is not:
+PyMark is *not*:
 
 	~ Really a markup language ~
 	

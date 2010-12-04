@@ -27,11 +27,8 @@ def Flagset(size):
 	return list
 
 def Flag(index):
-	if not(isInt(index)):
-		print "WARNING: Cannot create flag for "+index+" - indicies must be integers."
-		index = 0
-	if (index < 0):
-		print "WARNING: Cannot create flag for "+index+" - indicies must be greater than or equal to 0"
+	if not(isInt(index)) or (index < 0):
+		print "WARNING: Cannot create flag for "+index+" - indicies must be integers that are greater than or equal to 0."
 		index = 0
 	return 2**index
 
@@ -44,7 +41,7 @@ def Enum(size):
 		i += 1
 	return list
 	
-	
+
 # Other unimportant functions below ...	
 
 def isInt(n):
