@@ -1,6 +1,6 @@
 import argparse
 import sys
-from PyMark.Compiler import *
+import PyMark.Compiler
 
 """
 This is mainly just a hook into the command line for args and setting up of the main compiler object.
@@ -15,5 +15,5 @@ parser.add_argument('-w','--wipe',action="store_true",help='When given a list of
 
 args = parser.parse_args(sys.argv[1::])
 
-compiler = Compiler()
+compiler = PyMark.Compiler.Compiler()
 compiler.run(args)
