@@ -1,0 +1,38 @@
+PyMarkLoader Constructed
+Compiling all modules...
+
+>>>>>
+
+______________________________
+
+Pymark beginning...
+
+______________________________
+
+Importing modules...
+
+Importing Module "example_module"
+
+Imported 1 out of 1 modules.
+
+______________________________
+
+Compiling Modules...
+
+Compiling module "example_module"
+
+
+Compiled 1 out of 1 modules.
+
+Compiling Constants...
+______________________________
+
+            Done
+______________________________
+
+
+>>>>>
+
+Loading all modules...
+Loading module constants...
+Loading module example_module...

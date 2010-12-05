@@ -82,7 +82,7 @@ class PyMarkLoader
     public const short FLOAT        = 11;
     public const short DOUBLE       = 12;
     public const short REFERENCE    = 13;
-    public const short NULL         = 14;
+    public const short NONE         = 14;
 
     /// <summary>
     /// Class representing an internal unlinked reference.
@@ -90,56 +90,10 @@ class PyMarkLoader
     public class Reference
     {
         public Queue linkList;
-        private Hashtable domain;
 
         public Reference(Queue _linkList, Hashtable _domain)
         {
             linkList = _linkList;
-            domain = _domain;
-        }
-
-        public Object Lookup()
-        {
-            try
-            {
-                Queue listCopy = new Queue(linkList);
-                Object o = LookupReference(listCopy, domain);
-                return o;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private Object LookupReference(Queue linkList, Object o)
-        {
-            Object key = linkList.Dequeue();
-
-            Object nextObject;
-            if (key is String)
-            {
-                Hashtable currentObject = (Hashtable)o;
-                nextObject = currentObject[(String)key];
-            }
-            else if (key is int)
-            {
-                ArrayList currentObject = (ArrayList)o;
-                nextObject = currentObject[(int)key];
-            }
-            else
-            {
-                return null;
-            }
-
-            if (linkList.Count > 0)
-            {
-                return LookupReference(linkList, nextObject);
-            }
-            else
-            {
-                return nextObject;
-            }
         }
     }
 
@@ -335,7 +289,7 @@ class PyMarkLoader
         else if (o is Reference)
         {
             Reference o_ref = (Reference)o;
-            return o_ref.Lookup();
+            return GetLinkList(o_ref.linkList,modules);
         }
         else
         {
@@ -443,13 +397,69 @@ class PyMarkLoader
         {
             return readDouble(stream);
         }
-        else if (type == NULL)
+        else if (type == NONE)
         {
             return null;
         }
         else
         {
             throw new Exception("Unidentified type index:" + type + " Perhaps a badly formed .pm file?");
+        }
+    }
+
+    public Object Get(String reference)
+    {
+        return Get(reference, modules);
+    }
+
+    public Object Get(String reference, Object domain)
+    {
+        Queue linkList = new Queue();
+        string[] splits = reference.Split(".".ToCharArray());
+        foreach (string part in splits)
+        {
+            int output;
+            if (int.TryParse(part, out output))
+            {
+                linkList.Enqueue(output);
+            }
+            else
+            {
+                linkList.Enqueue(part);
+            }
+        }
+
+        return GetLinkList(linkList, domain);
+    }
+
+    public Object GetLinkList(Queue linkList, Object domain)
+    {
+
+        Object key = linkList.Dequeue();
+
+        Object nextObject;
+        if (key is String)
+        {
+            Hashtable currentObject = (Hashtable)domain;
+            nextObject = currentObject[(String)key];
+        }
+        else if (key is int)
+        {
+            ArrayList currentObject = (ArrayList)domain;
+            nextObject = currentObject[(int)key];
+        }
+        else
+        {
+            return null;
+        }
+
+        if (linkList.Count > 0)
+        {
+            return GetLinkList(linkList, nextObject);
+        }
+        else
+        {
+            return nextObject;
         }
     }
 
@@ -478,7 +488,7 @@ class PyMarkLoader
         byte p3 = (byte)stream.ReadByte();
         byte p4 = (byte)stream.ReadByte();
 
-        long ret = (p1 << 32) + (p2 << 16) + (p3 << 8) + (p4);
+        long ret = (p1 << 24) + (p2 << 16) + (p3 << 8) + (p4);
 
         return ret;
     }
