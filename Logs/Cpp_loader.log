@@ -1,3 +1,4 @@
+PyMarkLoader constructed
 Compiling all modules...
 
 >>>>>
@@ -32,3 +33,5 @@ ______________________________
 
 >>>>>
 
+Loading Module "constants"...
+Loading Module "example_module"...

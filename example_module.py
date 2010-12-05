@@ -28,7 +28,7 @@ example_module = {
 		"Ohter String",
 		"Blahhh",
 		red|dog_shaped|awesome,
-		SUNNY,
+		15.25,
 		Ref("example_module.second_entry")
 		),
 }

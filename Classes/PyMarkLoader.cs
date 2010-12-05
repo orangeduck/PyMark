@@ -113,7 +113,7 @@ class PyMarkLoader
     void LogMsg(String s)
     {
         StreamWriter sw;
-        sw = File.AppendText(path + @"\Logs\Csharp_Loader.log");
+        sw = File.AppendText(path + @"\Logs\Csharp_loader.log");
         sw.WriteLine(s);
         sw.Close();
     }
@@ -124,7 +124,7 @@ class PyMarkLoader
     public void ClearLog()
     {
         StreamWriter sw;
-        sw = File.CreateText(path + @"\Logs\Csharp_Loader.log");
+        sw = File.CreateText(path + @"\Logs\Csharp_loader.log");
         sw.WriteLine("");
         sw.Close();
     }
