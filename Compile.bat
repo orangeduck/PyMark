@@ -1,5 +1,5 @@
 @echo off
-python PyMark.py
+python pymark.py
 @del *.pyc
 echo.
 echo ______________________________

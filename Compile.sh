@@ -1,2 +1,2 @@
-python PyMark.py
+python pymark.py
 rm *.pyc

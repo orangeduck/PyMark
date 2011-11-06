@@ -1,34 +1,15 @@
-from PyMark.Util import *
+from pymark.util import *
 
-awesome, red, dog_shaped = Flags(3)
+merchandise, reward, bonus = Flags(3)
+body_armor, helmets, gloves, boots = Enum(4)
 
-OVERCAST, SUNNY, RAINY = Enum(3)
+def modifiers(*args): return args;
+def cost(x): return x
 
 example_module = {
-	"first_entry":(
-		"Some propery",
-		"Another property",
-		"A third property",
-		awesome|red,
-		OVERCAST,
-		None
-		),
-		
-	"second_entry":(
-		"Boobs",
-		"are",
-		"booby",
-		dog_shaped,
-		RAINY,
-		Ref("example_module.first_entry.0")
-		),
-	
-	"third_entry":(
-		"This is some ascii",
-		"Ohter String",
-		"Blahhh",
-		red|dog_shaped|awesome,
-		15.25,
-		Ref("example_module.second_entry")
-		),
+
+	"explorer_jacket" : ( "Explorer Jacket", "greatcoat_new", merchandise|reward, body_armor, cost(214), {"weight" : 5, "protection" : 11}, modifiers("old", "ragged", "torn") ),
+	"chaps" 	   	  : ( "Chaps", "chaps", merchandise|bonus, boots, cost(23), {"weight" : 1, "protection" : 2}, modifiers("wrapped", "posh", "battered") ),	
+	"sailor_shirt"    : ( "Sailor Shirt", "sailor_shirt", merchandise, body_armor, cost(112), {"weight" : 3, "protection" : 4}, modifiers("wet") ),
+	"pegleg" 	      : ( "Peg Leg", "peg_leg_m", None, boots, cost(321), {"weight" : 7, "protection" : 4}, modifiers("wonky", "new") ),	
 }

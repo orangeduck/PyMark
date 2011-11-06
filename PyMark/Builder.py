@@ -1,5 +1,5 @@
 import types
-import Util
+import util
 from struct import *
 
 """
@@ -23,11 +23,13 @@ DOUBLE			= 12
 REFERENCE		= 13
 NONE			= 14
 	
-def isSupportedType(o):
+def is_supported_type(o):
 	t = type(o)
-	return (t == types.ListType) or (t == types.DictType) or (t == types.TupleType) or (t == types.StringType) or (t == types.IntType) or (t == types.FloatType) or (t == types.LongType) or (t == types.NoneType)
+	return ((t == types.ListType) or (t == types.DictType) or (t == types.TupleType) or 
+			(t == types.StringType) or (t == types.IntType) or (t == types.FloatType) or 
+			(t == types.LongType) or (t == types.NoneType))
 
-def isBuiltInString(o):
+def is_builtin_string(o):
 	"""
 	Checks if an object, at first is a string, and second, the first two chars of which are "__"
 	Used for filtering out the __dict__ object you get from modules.
@@ -40,7 +42,7 @@ def isBuiltInString(o):
 	except:
 		return False
 	
-def typeLookup(o):
+def type_lookup(o):
 	"""
 	Looks up the type index of an object.
 	If object is long enough then uses longer vesion.
@@ -50,7 +52,7 @@ def typeLookup(o):
 	t = type(o)
 	
 	# hacked in
-	if (t == types.StringType) and o.startswith(Util.REF_PREFIX): return REFERENCE
+	if (t == types.StringType) and o.startswith(util.REF_PREFIX): return REFERENCE
 	
 	# long versions of native types
 	if (t == types.ListType) and (len(o) > 65536): return LONG_LIST
@@ -70,13 +72,12 @@ def typeLookup(o):
 	
 	raise StandardError("Unrecognized object of type \""+str(t.__name__)+"\". I don't know how to compile this!")
 
-def compileReference(o):
+def compile_reference(o):
 	"""
 	References are compiled into something that resembles a list. First the prefix is removed, then they are exploded around "."
 	Strings that look like digits are converted to ints and the whole thing is compiled like a list.
 	"""
-	
-	ref_string = o[len(Util.REF_PREFIX)::]
+	ref_string = o[len(util.REF_PREFIX)::]
 	ref_code = ref_string.split(".")
 	ref_lookup = []
 	for p in ref_code:
@@ -86,16 +87,16 @@ def compileReference(o):
 			ref_lookup.append(p)
 	o = ref_lookup
 	
-	return compileList(o)
+	return compile_list(o)
 	
-def compileList(o):
+def compile_list(o):
 	
 	if len(o) == 0:
 		return pack('>H',0)
 	else:
-		return pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compileObject(x),o) )
+		return pack('>H',len(o)) + reduce(lambda x, y: x+y, map(lambda x: compile_object(x),o) )
 	
-def compileObject(o):
+def compile_object(o):
 	"""
 	Looks up the type of an object, and based on this decides how to compile it into bytes.
 	The algorithm is fairly simple based on recursion for collection objects.
@@ -120,21 +121,20 @@ def compileObject(o):
 	|-----------------------------------------------|
 	
 	"""
-	t = typeLookup(o)
-
+	t = type_lookup(o)
 	
 	if t == LIST:
-		return pack('>B',t) + compileList(o)
+		return pack('>B',t) + compile_list(o)
 	elif t == LONG_LIST:
-		return pack('>B',t) + compileList(o)
+		return pack('>B',t) + compile_list(o)
 	elif t == DICT:
-		return pack('>B',t) + compileList(o.items())
+		return pack('>B',t) + compile_list(o.items())
 	elif t == LONG_DICT:
-		return pack('>B',t) + compileList(o.items())
+		return pack('>B',t) + compile_list(o.items())
 	elif t == TUPLE:
-		return pack('>B',t) + compileList(o)
+		return pack('>B',t) + compile_list(o)
 	elif t == LONG_TUPLE:
-		return pack('>B',t) + compileList(o)
+		return pack('>B',t) + compile_list(o)
 	elif t == STRING:
 		return pack('>B',t) + pack('>H',len(o)) + o
 	elif t == LONG_STRING:
@@ -146,7 +146,7 @@ def compileObject(o):
 	elif t == DOUBLE:
 		return pack('>B',t) + pack('>d',o)
 	elif t == REFERENCE:
-		return pack('>B',t) + compileReference(o)
+		return pack('>B',t) + compile_reference(o)
 	elif t == NONE:
 		return pack('>B',t)
 	

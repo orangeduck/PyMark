@@ -1,0 +1,60 @@
+/***********************************************/
+/* Main Styles  */
+/***********************************************/
+
+body{
+
+	font-family:Trebuchet MS,Verdana,Arial,Helvetica,sans-serif;
+	font-size:14px;
+	color:#303030;
+	
+}
+
+a{
+	color:#435555;
+}
+
+li{
+	padding:5px;
+}
+
+h1{
+	text-align:center;
+	color:#435555;
+}
+
+h2{
+	padding:20px;
+	color:#435555;
+	font-weight:bolder;
+}
+
+img{
+
+
+}
+
+
+
+.box{
+	padding:20px;
+	margin:20px;
+	background-color:#f1eece;
+	border: 1px solid #435555;
+	border-radius: 15px;
+	-moz-border-radius: 15px;
+}
+
+.shadow{
+-moz-box-shadow: 0 0 5px #888;
+-webkit-box-shadow: 0 0 5px#888;
+box-shadow: 0 0 5px #888;
+}
+
+.center{
+	text-align:center;
+}
+
+.container{
+	padding: 75px;
+}
