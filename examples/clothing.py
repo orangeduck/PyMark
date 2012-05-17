@@ -1,14 +1,22 @@
-from pymark.util import flags, enum
+""" Clothing Objects for Game """
 
-merchandise, reward, bonus = flags(3)
-body_armor, helmets, gloves, boots = enum(4)
+from pymark.util import flags, enum, module, properties, modifiers
 
-def modifiers(*args): return args;
-def cost(x): return x
+Merchandise, Reward, Bonus = flags(3)
+BodyArmor, Helmets, Gloves, Boots = enum(4)
 
-example_module = {
-	"explorer_jacket" : ( "Explorer Jacket", "greatcoat_new", merchandise|reward, body_armor, cost(214), {"weight" : 5, "protection" : 11}, modifiers("old", "ragged", "torn") ),
-	"chaps" 	   	  : ( "Chaps", "chaps", merchandise|bonus, boots, cost(23), {"weight" : 1, "protection" : 2}, modifiers("wrapped", "posh", "battered") ),	
-	"sailor_shirt"    : ( "Sailor Shirt", "sailor_shirt", merchandise, body_armor, cost(112), {"weight" : 3, "protection" : 4}, modifiers("wet") ),
-	"pegleg" 	      : ( "Peg Leg", "peg_leg_m", None, boots, cost(321), {"weight" : 7, "protection" : 4}, modifiers("wonky", "new") ),	
-}
+clothing = module (
+
+	explorer_jacket = ["Explorer Jacket", "greatcoat_new",  Merchandise | Reward, BodyArmor, 
+	                   properties(cost = 214, weight = 5, protection = 11), modifiers("old", "ragged", "torn") ],
+	                   
+	chaps 	   	    = ["Chaps", "chaps",  Merchandise | Bonus, Boots, 
+	                   properties(cost = 23, weight = 1, protection = 2), modifiers("wrapped", "posh", "battered") ],
+	                    	
+	sailor_shirt    = ["Sailor Shirt", "sailor_shirt", Merchandise, BodyArmor, 
+	                   properties(cost = 112, weight = 3, protection = 4), modifiers("wet") ],
+	
+	pegleg 	        = ["Peg Leg", "peg_leg_m", None, Boots, 
+	                   properties(cost = 321, weight = 7, protection = 4), modifiers("wonky", "new") ]
+
+)
