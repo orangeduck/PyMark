@@ -4,21 +4,23 @@ PyMark
 About
 -----
 
-PyMark provides a powerful Python frontend and a simple binary backend. It uses Python as a front end and compiles to a binary format for fast serialisation into an application.
+PyMark uses Python as a powerful front end to markup and compiles data to a simple binary format for fast serialisation into an application.
 
 
 Advantages
 ----------
 
-Using Python as a front end means syntax is checked at compile time and you have the whole power of a programming language behind your markup task. For human written markup this is very useful. Compiling to a simple binary format makes serialisation fast and easy and can be mapped to a target language in a few lines of code.
-
 Having a focus on a powerful front end has many benefits lacking in other object markup techniques:
 	
 * Bad syntax in markup is caught at compile time.
+* A whole programming language to help you!
 * Lists, Tuples, Dictionaries are all first class structures.
 * Not everything has to be a tree of strings.
-* More expression and freedom using better syntax.
+* More expression and freedom in markup.
 * Structure manipulation/patching can be done easily and early.
+
+And having a simple back end has some benefits too.
+
 * Lightweight parser written in less than 200 lines of C.
 * Reads/Writes/Streams data quickly.
 * If required, obfuscation is possible.
@@ -32,10 +34,10 @@ Having so much happen in the front end makes the system somewhat one-directional
 While the human readable source can be reconstructed in some sense, data such as comments and other markup is lost in the compilation. For distribution and collaboration it is important to also share the source files.
 
 
-Usage 
------
+Data Entry 
+----------
 
-First write a python module with an object the same name as the file. You can do this how you please. If you are a JSON fan you might write something like this:
+The first task is to actually enter your data. For this you create a python module with an object the same name as the file. You can structure this how you please. If you are a JSON fan you might write something like this:
 
 ```python
 """ My Favourite Pets - A basic example """
@@ -66,7 +68,7 @@ pets_one = {
 }
 ```
 
-But having Python allows you to be much more expressive if you wish. You can adjust the data entry in many different ways to make it simpler, more explicit, or more aesthetic.
+But having Python allows you to be much more expressive. You can adjust the data entry in many different ways to make it simpler, more explicit, or more aesthetic.
 
 ```python
 """ My Favourite Pets - Another example """
@@ -115,17 +117,27 @@ pets_two = module(
 )
 ```
 
-I have no real preference for either but in using Python it allows you to adapt your markup depending on your preference or domain.
+Perhaps the above example looks like a bit of a mess, but it does show off some of the potential. I have no real preference for either style but in using Python you have the option to adapt your markup depending on preference or domain.
+
+
+Compiling
+---------
 
 Once you have the module written just feed it into pymark.
 
-```bash
+```shell
 pymark pets_two.py > pets_good.pmk
 ```
 
-Loading data at runtime and making it easy to access in a typesafe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. Saying this I've tried to do my best to make the APIs fairly simplistic and clear. In C you can do something like this.
 
-```
+Application
+-----------
+
+I have tried to make the API fairly simplistic and clear.
+
+Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. In C you can do something like this.
+
+```c
 #include <stdio.h>
 
 #include "PyMark.h"
@@ -156,10 +168,9 @@ int main(int argc, char** argv) {
 }
 ```
 
-The C++ syntax is a little more sane though the implementation not much cleaner.
+The C++ syntax is a little more sane though the implementation not much cleaner on the whole.
 
-```
-
+```c++
 #include <stdio.h>
 
 #include "PyMark.hpp"
@@ -184,5 +195,5 @@ int main(int argc, char** argv) {
 
 ```
 
-Hopefully more languages supported soon.
+Hopefully more languages supported soon...
 
