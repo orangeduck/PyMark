@@ -13,9 +13,11 @@
 #define PyMarkListType    8
 #define PyMarkDictType    9
 
+typedef char PyMarkType;
+
 typedef struct PyMarkObject {
   
-  char type;
+  PyMarkType type;
   
   union {
   

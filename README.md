@@ -163,5 +163,31 @@ Color: (237, 133, 14)
 ToyIDs: 1, 2, 
 ```
 
+The C++ syntax is a little more sane but really implementing data-access at run-time in a type safe language is always going to suck to some degree.
 
+```
+
+#include <stdio.h>
+
+#include "PyMark.hpp"
+
+int main(int argc, char** argv) {
+  
+  PyMark::PyMarkObject* pets = PyMark::Unpack("pets_two.pmk");
+  PyMark::PyMarkObject* cath = pets->Get("catherine");
+  
+  printf("Test2\n");
+  printf("-----\n");
+  printf("TypeID: %i\n", cath->Get("type")->AsInt());
+  printf("Name: %s\n", cath->Get("name")->AsString());
+  printf("Color: (%i, %i, %i)\n", cath->Get("color")->At(0)->AsInt(), 
+                                  cath->Get("color")->At(1)->AsInt(), 
+                                  cath->Get("color")->At(2)->AsInt());
+  
+  delete pets;
+  
+  return 0;
+}
+
+```
 

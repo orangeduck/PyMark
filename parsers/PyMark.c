@@ -26,7 +26,7 @@ static PyMarkObject* PyMarkDict_Get(PyMarkObject* self, char* key) {
     return NULL;
   }
   
-  for(int i = 0; i < self->length; i++) {
+  for(int64_t i = 0; i < self->length; i++) {
     
     PyMarkObject* pair = self->items[i];
     
@@ -188,6 +188,7 @@ void PyMark_Delete(PyMarkObject* o) {
       for(int64_t i = 0; i < o->length; i++) {
         PyMark_Delete(o->items[i]);
       }
+      free(o->items);
       free(o);
     break;
     
