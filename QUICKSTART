@@ -1,7 +1,0 @@
-Take a look at the example module for an idea of syntax and what pymark looks like.
-
-1. Build .py files in this folder containing a data structure with the same name as the file.
-2. Inside this data structure build other structures using native python types.
-3. Running compile(.sh/.bat) will compile these structures into .pm files inside the "compiled" folder.
-4. Grab a loader from the "loaders" folder which matches your target language.
-5. Use this class to load your .pm files.
