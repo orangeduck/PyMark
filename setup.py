@@ -9,6 +9,6 @@ setup(name='PyMark',
       author_email='contact@daniel-holden.com',
       url='',
       packages=['pymark'],
-      data_files=["./README.md", "./LICENSE.md"],
+      scripts=['scripts/pymark'],
       license="BSD"
     )

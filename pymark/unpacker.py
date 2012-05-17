@@ -16,9 +16,12 @@ DICT    = 9
 def unpack_file(filename):
 
     f = open(filename, 'rb')
-    magic = f.read(6)
     
+    magic = f.read(6)
     if magic != "PYMARK": raise StandardError("Badly formed PyMark file. Bad magic number.")
+    
+    version = ord(f.read(1))
+    if version != 1: raise StandardError("Cannot load PyMark file version %i." % version)
     
     o = unpack_object(f)
     f.close()
