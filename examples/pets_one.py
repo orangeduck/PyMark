@@ -1,6 +1,6 @@
 """ My Favourite Pets - A basic example """
 
-pets_bad = {
+pets_one = {
 
   "benny" : {
     "type"  : "Dog",

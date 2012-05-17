@@ -18,7 +18,7 @@ Ginger = color(237, 133, 14)
 
 """ Module """
 
-pets_good = module(
+pets_two = module(
   
   benny = pet(
     type = Dog,

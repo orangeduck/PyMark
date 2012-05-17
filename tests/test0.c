@@ -7,6 +7,7 @@ int main(int argc, char** argv) {
   PyMarkObject* clothing = PyMark_Unpack("clothing.pmk");
   PyMarkObject* pegleg_prop = clothing->get(clothing, "pegleg")->items[4];
   
+  printf("\n");
   printf("Test0\n");
   printf("-----\n");
   printf("Pegleg cost: %i\n", pegleg_prop->get(pegleg_prop, "cost")->as_int);
