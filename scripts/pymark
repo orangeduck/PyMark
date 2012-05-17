@@ -8,12 +8,19 @@ import argparse
 import pymark.packer
 
 parser = argparse.ArgumentParser(description='Create PyMark binaries')
-parser.add_argument('input', metavar='<input.py>', nargs=1, help='Input Python file')
+parser.add_argument('module', nargs=1, help='Input Python file')
+parser.add_argument('-o', '--out', metavar="output", help='Optional output binary filename. If not provided binary data is written to stdout.')
 
 args = parser.parse_args()
 
-module = imp.load_source('__pymark__', args.input[0])
-module_object = os.path.splitext(os.path.basename(args.input[0]))[0]
+module = imp.load_source('__pymark__', args.module[0])
+module_object = os.path.splitext(os.path.basename(args.module[0]))[0]
 
 output_object = module.__dict__[module_object]
-pymark.packer.pack_file(module_object+".pmk", output_object)
+
+if args.out:
+    pymark.packer.pack_file(args.out, output_object)
+else:
+    pymark.packer.pack_stream(sys.stdout, output_object)
+
+

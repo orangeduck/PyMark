@@ -13,20 +13,28 @@ TUPLE   = 7
 LIST    = 8
 DICT    = 9
 
+VERSION = 1
+
 def unpack_file(filename):
 
     f = open(filename, 'rb')
+    o = unpack_stream(f)
+    f.close()
+    return o
+
+
+def unpack_stream(f):
     
     magic = f.read(6)
-    if magic != "PYMARK": raise StandardError("Badly formed PyMark file. Bad magic number.")
+    if magic != "PYMARK":
+        raise StandardError("Badly formed PyMark file. Bad magic number.")
     
     version = ord(f.read(1))
-    if version != 1: raise StandardError("Cannot load PyMark file version %i." % version)
+    if version != VERSION:
+        raise StandardError("Cannot load PyMark file version %i." % version)
     
-    o = unpack_object(f)
-    f.close()
-
-    return o
+    return unpack_object(f)
+    
     
 def unpack_object(f):
     

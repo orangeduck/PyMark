@@ -4,34 +4,36 @@ PyMark
 About
 -----
 
-When it comes to object markup, PyMark believes in a powerful frontend and a simple backend. It uses python as a front end and compiles to a binary format for fast serialisation into an application.
+PyMark provides a powerful Python frontend and a simple binary backend. It uses Python as a front end and compiles to a binary format for fast serialisation into an application.
 
 
 Advantages
 ----------
 
-Using Python as a front end means syntax is checked at compile time and you have the whole power of a programming language behind your markup task. For a human writing markup this is very useful. Compiling to a simple binary format makes serialisation fast and easy and that it can be mapped to a target language's native types.
+Using Python as a front end means syntax is checked at compile time and you have the whole power of a programming language behind your markup task. For human written markup this is very useful. Compiling to a simple binary format makes serialisation fast and easy and can be mapped to a target language in a few lines of code.
 
-Having a focus on the front end has many benefits lacking in other object markup languages:
+Having a focus on a powerful front end has many benefits lacking in other object markup techniques:
 	
-	* Bad syntax in markup caught at compile time.
-	* Lists, Tuples, Dictionaries are all first class objects.
-	* Not everything is a tree of strings.
-	* More expression and freedom with less syntax.
-	* Structure manipulation/patching can be done at the front end easily.
-	* Lightweight parser written in less than 200 lines of C.
-	* Reads/Writes data extremely fast.
-	* If required, obfuscation is easy.
-	
+* Bad syntax in markup is caught at compile time.
+* Lists, Tuples, Dictionaries are all first class structures.
+* Not everything has to be a tree of strings.
+* More expression and freedom using better syntax.
+* Structure manipulation/patching can be done easily and early.
+* Lightweight parser written in less than 200 lines of C.
+* Reads/Writes/Streams data quickly.
+* If required, obfuscation is possible.
+
 	
 Disadvantages
 -------------
 
-The system is somewhat one way. While the human readable source can be reconstructed in some sense, data such as comments and other markup is lost in the compilation. For distribution and collaboration it is important to also share the source files.
+Having so much happen in the front end makes the system somewhat one-directional.
+
+While the human readable source can be reconstructed in some sense, data such as comments and other markup is lost in the compilation. For distribution and collaboration it is important to also share the source files.
 
 
-The Front End
--------------
+Usage 
+-----
 
 First write a python module with an object the same name as the file. You can do this how you please. If you are a JSON fan you might write something like this:
 
@@ -44,27 +46,27 @@ pets_one = {
     "type"  : "Dog",
     "name"  : "Benny Boos",
     "color" : "Brown",
-    "toys"  : { "0" : "Bone", "1" : "Ball" }
+    "toys"  : ["Bone", "Ball"]
   },
   
   "roger" : {
     "type"  : "Horse",
     "name"  : "Roger Horse",
     "color" : "White",
-    "toys"  : { "0" : "Brush", "1" : "String" }
+    "toys"  : ["Brush", "String"]
   },
 
   "catherine" : {
     "type"  : "Cat",
     "name"  : "Catherine",
     "color" : "Ginger",
-    "toys"  : { "0" : "String", "1" : "Mouse" }
+    "toys"  : ["String", "Mouse"]
   }
 
 }
 ```
 
-But having Python allows you to be much more expressive if you want.
+But having Python allows you to be much more expressive if you wish. You can adjust the data entry in many different ways to make it simpler, more explicit, or more aesthetic.
 
 ```python
 """ My Favourite Pets - Another example """
@@ -113,15 +115,15 @@ pets_two = module(
 )
 ```
 
-The choice is up to you and I don't really have a dogma one way or the other. The nice thing about using Python is that it allows you to adapt your markup depending on your preference or domain. Once you have this file just feed it into pymark.
+I have no real preference for either but in using Python it allows you to adapt your markup depending on your preference or domain.
+
+Once you have the module written just feed it into pymark.
 
 ```bash
-pymark pets_two.py
+pymark pets_two.py > pets_good.pmk
 ```
 
-This will produce a file ```pets_good.pmk```.
-
-Loading runtime data at runtime and making it easy to access in a typesafe language is always horrible. Saying this I've tried to do my best to make the APIs fairly simplistic and clear. In C you can do something like this.
+Loading data at runtime and making it easy to access in a typesafe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. Saying this I've tried to do my best to make the APIs fairly simplistic and clear. In C you can do something like this.
 
 ```
 #include <stdio.h>
@@ -154,16 +156,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-And hopefully it should output:
-
-```
-TypeID: 4
-Name: Catherine
-Color: (237, 133, 14)
-ToyIDs: 1, 2, 
-```
-
-The C++ syntax is a little more sane but really implementing data-access at run-time in a type safe language is always going to suck to some degree.
+The C++ syntax is a little more sane though the implementation not much cleaner.
 
 ```
 
@@ -190,4 +183,6 @@ int main(int argc, char** argv) {
 }
 
 ```
+
+Hopefully more languages supported soon.
 

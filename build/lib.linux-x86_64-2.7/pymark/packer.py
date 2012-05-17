@@ -15,25 +15,41 @@ DICT    = 9
 
 VERSION = 1
 
+
 def pack_file(filename, o):
-    
     f = open(filename, 'wb')
+    pack_stream(f, o)
+    f.close()
+
+
+def pack_stream(f, o):
     f.write("PYMARK")
     f.write(pack(">B", VERSION))
-    f.write(pack_object(o))
-    f.close()
+    pack_object(f, o)
     
     
-def pack_object(o):
-	
+def pack_object(f, o):
+	  
     t = type(o)
 
-    if t == IntType:     return pack('<Bi', INT, o)
-    elif t == LongType:  return pack('<Bq', LONG, o)
-    elif t == FloatType: return pack('<Bf', FLOAT, o)
-    elif t == NoneType:  return pack('<B' , NONE)
-    elif t == StringType:return pack('<Bq', STRING, len(o)) + o
-    elif t == TupleType: return pack('<Bq', TUPLE, len(o)) + "".join([pack_object(x) for x in o])
-    elif t == ListType:  return pack('<Bq', LIST, len(o)) + "".join([pack_object(x) for x in o])
-    elif t == DictType:  return pack('<Bq', DICT, len(o)) + "".join([pack_object(x) for x in o.items()])
-    else: raise StandardError("Cannot compile object of type '%s'" % t.__name__)
+    if t == IntType:      f.write(pack('<Bi', INT, o))
+    elif t == LongType:   f.write(pack('<Bq', LONG, o))
+    elif t == FloatType:  f.write(pack('<Bf', FLOAT, o))
+    elif t == NoneType:   f.write(pack('<B' , NONE))
+    elif t == StringType:
+        f.write(pack('<Bq', STRING, len(o)))
+        f.write(o)
+    elif t == TupleType:
+        f.write(pack('<Bq', TUPLE, len(o)))
+        for x in o: pack_object(f, x)
+    elif t == ListType:
+        f.write(pack('<Bq', LIST, len(o)))
+        for x in o: pack_object(f, x)
+    elif t == DictType: 
+        f.write(pack('<Bq', DICT, len(o)))
+        for x in o.items(): pack_object(f, x)
+    else:
+        raise StandardError("Cannot compile object of type '%s'" % t.__name__)
+    
+    
+    
