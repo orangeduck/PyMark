@@ -4,7 +4,7 @@
 
 #include "PyMark.h"
 
-static PyMarkObject* PyMarkList_At(PyMarkObject* self, int i) {
+static PyMarkObject* PyMarkList_At(PyMarkObject* self, int64_t i) {
   
   if ((self->type != PyMarkListType) || 
       (self->type != PyMarkTupleType) || 
@@ -53,6 +53,11 @@ static PyMarkObject* PyMarkDict_Get(PyMarkObject* self, char* key) {
 static PyMarkObject* PyMark_UnPackObject(FILE* f) {
   
   PyMarkObject* out = malloc(sizeof(PyMarkObject));
+  if (out == NULL) {
+    fprintf(stderr, "Error: PyMark out of memory.\n");
+    return NULL;
+  }
+  
   fread(&out->type, 1, 1, f);
   
   int64_t str_len;
@@ -63,6 +68,7 @@ static PyMarkObject* PyMark_UnPackObject(FILE* f) {
     case PyMarkLongType: fread(&out->as_long, 8, 1, f); break;
     case PyMarkFloatType: fread(&out->as_float, 4, 1, f); break;
     case PyMarkDoubleType: fread(&out->as_double, 8, 1, f); break;
+    case PyMarkBoolType: fread(&out->as_bool, 1, 1, f); break;
     case PyMarkNoneType: out->as_none = NULL; break;
     
     case PyMarkStringType:
@@ -92,7 +98,9 @@ static PyMarkObject* PyMark_UnPackObject(FILE* f) {
       out->get = PyMarkDict_Get;
     break;
     
-    default: return NULL;
+    default:
+      fprintf(stderr, "Error: Unknown PyMark Type id %i\n", out->type);
+      return NULL;
   }
   
   return out;
@@ -107,11 +115,17 @@ PyMarkObject* PyMark_Unpack(char* filename) {
   char magic[7];
   fread(magic, 6, 1, f);
   magic[6] = '\0';
-  if (strcmp(magic, "PYMARK") != 0) { return NULL; }
+  if (strcmp(magic, "PYMARK") != 0) {
+    fprintf(stderr, "PyMark Error: Bad Magic number for file '%s'\n", filename);
+    return NULL;
+  }
   
   unsigned char version;
   fread(&version, 1, 1, f);
-  if (version != 1) { return NULL; }
+  if (version != 1) {
+    fprintf(stderr, "PyMark Error: Bad Version number %i for file '%s'\n", version, filename);
+    return NULL;
+  }
   
   PyMarkObject* o = PyMark_UnPackObject(f);
   
@@ -132,6 +146,7 @@ static void PyMark_PackObject(FILE* f, PyMarkObject* o) {
     case PyMarkLongType: fwrite(&o->as_long, 8, 1, f); break;
     case PyMarkFloatType: fwrite(&o->as_float, 4, 1, f); break;
     case PyMarkDoubleType: fwrite(&o->as_double, 8, 1, f); break;
+    case PyMarkBoolType: fwrite(&o->as_bool, 1, 1, f); break;
     case PyMarkNoneType: break;
     
     case PyMarkStringType:
@@ -175,6 +190,7 @@ void PyMark_Delete(PyMarkObject* o) {
     case PyMarkLongType: free(o); break;
     case PyMarkFloatType: free(o); break;
     case PyMarkDoubleType: free(o); break;
+    case PyMarkBoolType: free(o); break;
     case PyMarkNoneType: free(o); break;
     
     case PyMarkStringType:

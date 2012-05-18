@@ -15,11 +15,12 @@ namespace PyMark {
 	const PyMarkType PyMarkLongType   = 2;
 	const PyMarkType PyMarkFloatType  = 3;
 	const PyMarkType PyMarkDoubleType = 4;
-	const PyMarkType PyMarkNoneType   = 5;
-	const PyMarkType PyMarkStringType = 6;
-	const PyMarkType PyMarkTupleType  = 7;
-	const PyMarkType PyMarkListType   = 8;
-	const PyMarkType PyMarkDictType   = 9;
+	const PyMarkType PyMarkBoolType   = 5;
+	const PyMarkType PyMarkNoneType   = 6;
+	const PyMarkType PyMarkStringType = 7;
+	const PyMarkType PyMarkTupleType  = 8;
+	const PyMarkType PyMarkListType   = 9;
+	const PyMarkType PyMarkDictType   = 10;
 
 	class PyMarkObject {
 		
@@ -33,6 +34,7 @@ namespace PyMark {
 			int64_t m_long;
 			float m_float;
 			double m_double;
+			bool m_bool;
 			void* m_none;
 			char* m_string;
 			
@@ -55,6 +57,7 @@ namespace PyMark {
 		int32_t AsLong();
 		float AsFloat();
 		double AsDouble();
+		bool AsBool();
 		void* AsNone();
 		char* AsString();
 		

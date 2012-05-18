@@ -16,6 +16,7 @@ namespace PyMark {
 			case PyMarkLongType: f.read((char*)&m_data.m_long, 8); break;
 			case PyMarkFloatType: f.read((char*)&m_data.m_float, 4); break;
 			case PyMarkDoubleType: f.read((char*)&m_data.m_double, 8); break;
+			case PyMarkBoolType: f.read((char*)&m_data.m_bool, 1); break;
 			case PyMarkNoneType: m_data.m_none = 0; break;
 			
 			case PyMarkStringType:
@@ -83,6 +84,10 @@ namespace PyMark {
 		return m_data.m_double;
 	}
 
+	bool PyMarkObject::AsBool() {
+		return m_data.m_bool;
+	}
+	
 	void* PyMarkObject::AsNone() {
 		return m_data.m_none;
 	}
@@ -203,6 +208,10 @@ namespace PyMark {
 			case PyMarkDoubleType: {
 				double data = o->AsDouble();
 				f.write((char*)&data, 4);
+			} break;
+			case PyMarkBoolType: {
+				bool data = o->AsBool();
+				f.write((char*)&data, 1);
 			} break;
 			case PyMarkNoneType: break;
 			

@@ -5,8 +5,11 @@
 int main(int argc, char** argv) {
   
   PyMarkObject* pets = PyMark_Unpack("pets_two.pmk");
-  PyMarkObject* cath = pets->get(pets, "catherine");
+  //PyMarkObject* pets_mod = PyMark_Unpack("pets_two.pmk");
   
+  //PyMarkObject* pets = pets_mod->get(pets_mod, "pets");
+  
+  PyMarkObject* cath = pets->get(pets, "catherine");
   PyMarkObject* cath_color = cath->get(cath, "color");
   PyMarkObject* cath_toys = cath->get(cath, "toys");
   

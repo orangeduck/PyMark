@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!C:\Python27\python.exe
 
 import os
 import sys
@@ -21,6 +21,11 @@ output_object = module.__dict__[module_object]
 if args.out:
     pymark.packer.pack_file(args.out, output_object)
 else:
+    
+    if sys.platform == "win32":
+        import os, msvcrt
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+    
     pymark.packer.pack_stream(sys.stdout, output_object)
 
 
