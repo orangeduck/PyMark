@@ -73,7 +73,7 @@ But having Python allows you to be much more expressive. You can adjust the data
 ```python
 """ My Favourite Pets - Another example """
 
-from pymark.util import enum, module
+from pymark.util import enum, module, struct
 
 """ Functions """
 
@@ -82,38 +82,38 @@ def color(r, g, b): return (r, g, b)
 
 """ Constants """
 
-Dog, Horse, Cat = enum(3)
-String, Mouse, Brush, Bone, Ball = enum(5)
+Types = enum("Dog", "Horse", "Cat")
+Toys = enum("String", "Mouse", "Brush", "Bone", "Ball")
 
-Brown = color(94, 83, 51)
-White = color(255, 255, 255)
-Ginger = color(237, 133, 14)
+Colors = struct(
+    Brown = color(94, 83, 51),
+    White = color(255, 255, 255),
+    Ginger = color(237, 133, 14),
+)
 
 """ Module """
 
 pets_two = module(
-  
   benny = pet(
-    type = Dog,
+    type = Types.Dog,
     name = "Benny Boos",
-    color = Brown,
-    toys = [Bone, Ball]
+    color = Colors.Brown,
+    toys = [Toys.Bone, Toys.Ball]
   ),
 
   roger = pet(
-    type = Horse,
+    type = Types.Horse,
     name = "Roger Horse",
-    color = White,
-    toys = [Brush, String]
+    color = Colors.White,
+    toys = [Toys.Brush, Toys.String]
   ),
   
   catherine = pet(
-    type = Cat,
+    type = Types.Cat,
     name = "Catherine",
-    color = Ginger, 
-    toys = [String, Mouse]
+    color = Colors.Ginger, 
+    toys = [Toys.String, Toys.Mouse]
   )
-
 )
 ```
 
@@ -125,8 +125,8 @@ Compiling
 
 Once you have the module written just feed it into pymark.
 
-```shell
-pymark pets_two.py > pets_good.pmk
+```sh
+pymark pets_two.py > pets_two.pmk
 ```
 
 
