@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='PyMark',
-      version='0.6',
+      version='0.6.5',
       description='Python Flavoured Markup',
       author='Daniel Holden',
       author_email='contact@daniel-holden.com',

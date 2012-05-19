@@ -11,7 +11,7 @@ PyMarkNone    = 6
 PyMarkString  = 7
 PyMarkTuple   = 8
 PyMarkList    = 9
-PyMarkDict    = 10 
+PyMarkDict    = 10
 
 PyMarkVersion = 1
 
@@ -29,8 +29,6 @@ def pack_stream(f, o):
     
 def pack_object(f, o):
     
-    import sys
-    
     if isinstance(o, int): f.write(pack('<Bi', PyMarkInt, o))
     elif isinstance(o, long): f.write(pack('<Bq', PyMarkLong, o))
     elif isinstance(o, float): f.write(pack('<Bf', PyMarkFloat, o))
@@ -47,11 +45,11 @@ def pack_object(f, o):
     elif isinstance(o, list):
         f.write(pack('<Bq', PyMarkList, len(o)))
         for x in o: pack_object(f, x)
-    elif isinstance(o, dict): 
+    elif isinstance(o, dict):
         f.write(pack('<Bq', PyMarkDict, len(o)))
         for x in o.items(): pack_object(f, x)
     else:
-        pass
+        f.write(pack('<B' , PyMarkNone))
     
     
     

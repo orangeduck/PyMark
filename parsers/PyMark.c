@@ -73,7 +73,7 @@ static PyMarkObject* PyMark_UnPackObject(FILE* f) {
     
     case PyMarkStringType:
       fread(&str_len, 8, 1, f);
-      out->as_string = malloc(sizeof(str_len) + 1);
+      out->as_string = malloc(str_len + 1);
       fread(out->as_string, str_len, 1, f);
       out->as_string[str_len] = '\0';
     break;

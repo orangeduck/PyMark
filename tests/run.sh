@@ -9,3 +9,4 @@ g++ --std=c++0x -Wall -Werror -g test2.cpp ../parsers/PyMark.cpp -o test2
 ./test0
 ./test1
 ./test2
+python test3.py

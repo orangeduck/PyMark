@@ -1,70 +1,59 @@
 PyMark
 ======
 
+
 About
 -----
 
-PyMark uses Python as a powerful front end to markup and compiles data to a simple binary format for fast serialisation into an application.
+PyMark is a lightweight and powerful object markup solution which uses Python as a frontend to and compiles data to a simple binary format for use in an application.
 
+Having a focus on a powerful frontend has many benefits missing from other object markup techniques:
 
-Advantages
-----------
-
-Having a focus on a powerful front end has many benefits lacking in other object markup techniques:
-	
-* Bad syntax in markup is caught at compile time.
-* A whole programming language to help you!
+* Bad syntax is caught at compile time.
+* A whole programming language to help you.
 * Lists, Tuples, Dictionaries are all first class structures.
-* Not everything has to be a tree of strings.
-* More expression and freedom in markup.
 * Structure manipulation/patching can be done easily and early.
 
-And having a simple back end has some benefits too.
+And having a simple backend has some benefits too.
 
-* Lightweight parser written in less than 200 lines of C.
+* A parser in less than 200 lines of C.
 * Reads/Writes/Streams data quickly.
-* If required, obfuscation is possible.
-
-	
-Disadvantages
--------------
-
-Having so much happen in the front end makes the system somewhat one-directional.
-
-While the human readable source can be reconstructed in some sense, data such as comments and other markup is lost in the compilation. For distribution and collaboration it is important to also share the source files.
 
 
-Data Entry 
-----------
+Drawbacks
+---------
 
-The first task is to actually enter your data. For this you create a python module with an object the same name as the file. You can structure this how you please. If you are a JSON fan you might write something like this:
+Having so much happen in the frontend makes the system somewhat one-directional.
+
+While the human readable source can be reconstructed in some sense, data such as comments are lost in the compilation. PyMark is best used for human written object description for use in an application.
+
+Usage
+-----
+
+The first task is to actually enter your data. For this you simply create a python module. All native objects at the top level other than the builtins dict will be exported. You can structure this how you please. If you are a JSON fan you might write something like this:
 
 ```python
 """ My Favourite Pets - A basic example """
 
-pets_one = {
-
-  "benny" : {
-    "type"  : "Dog",
-    "name"  : "Benny Boos",
-    "color" : "Brown",
-    "toys"  : ["Bone", "Ball"]
-  },
+benny = {
+  "type"  : "Dog",
+  "name"  : "Benny Boos",
+  "color" : "Brown",
+  "toys"  : ["Bone", "Ball"]
+}
   
-  "roger" : {
-    "type"  : "Horse",
-    "name"  : "Roger Horse",
-    "color" : "White",
-    "toys"  : ["Brush", "String"]
-  },
+roger = {
+  "type"  : "Horse",
+  "name"  : "Roger Horse",
+  "color" : "White",
+  "toys"  : ["Brush", "String"]
+}
 
-  "catherine" : {
-    "type"  : "Cat",
-    "name"  : "Catherine",
-    "color" : "Ginger",
-    "toys"  : ["String", "Mouse"]
-  }
-
+catherine = {
+  "type"  : "Cat",
+  "name"  : "Catherine",
+  "color" : "Ginger",
+  "toys"  : ["String", "Mouse"]
 }
 ```
 
@@ -93,7 +82,8 @@ Colors = struct(
 
 """ Module """
 
-pets_two = module(
+pets = module(
+  
   benny = pet(
     type = Types.Dog,
     name = "Benny Boos",
@@ -114,6 +104,7 @@ pets_two = module(
     color = Colors.Ginger, 
     toys = [Toys.String, Toys.Mouse]
   )
+
 )
 ```
 
@@ -135,50 +126,52 @@ Application
 
 I have tried to make the API fairly simplistic and clear.
 
-Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. In C you can do something like this.
+Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it.
+
+C
+-
+
+In C you can do something like this.
 
 ```c
 #include <stdio.h>
 
-#include "PyMark.h"
+#include "../parsers/PyMark.h"
 
 int main(int argc, char** argv) {
   
-  PyMarkObject* pets = PyMark_Unpack("pets_two.pmk");
-  PyMarkObject* cath = pets->get(pets, "catherine");
+  PyMarkObject* pets_mod = PyMark_Unpack("pets_two.pmk");
+  PyMarkObject* pets = pets_mod->get(pets_mod, "pets");
   
+  PyMarkObject* cath = pets->get(pets, "catherine");
   PyMarkObject* cath_color = cath->get(cath, "color");
-  PyMarkObject* cath_toys = cath->get(cath, "toys");
   
   printf("TypeID: %i\n", cath->get(cath, "type")->as_int);
   printf("Name: %s\n", cath->get(cath, "name")->as_string);
-  printf("Color: (%i, %i, %i)", cath_color->items[0].as_int, 
-                                cath_color->items[1].as_int, 
-                                cath_color->items[2].as_int);
+  printf("Color: (%i, %i, %i)\n", cath_color->items[0]->as_int, 
+                                cath_color->items[1]->as_int, 
+                                cath_color->items[2]->as_int);
   
-  printf("ToyIDs: ");
-  for(int i = 0; i < cath_toys->length; i++) {
-    printf("%i, ", cath_toys->items[i]->as_int);
-  }
-  printf("\n");
-  
-  PyMark_Delete(pets);
+  PyMark_Delete(pets_mod);
   
   return 0;
 }
 ```
 
-The C++ syntax is a little more sane though the implementation not much cleaner on the whole.
+C++
+---
+
+The C++ parser which has somewhat nicer syntax.
 
 ```c++
 #include <stdio.h>
 
-#include "PyMark.hpp"
+#include "../parsers/PyMark.hpp"
 
 int main(int argc, char** argv) {
   
-  PyMark::PyMarkObject* pets = PyMark::Unpack("pets_two.pmk");
-  PyMark::PyMarkObject* cath = pets->Get("catherine");
+  PyMark::PyMarkObject* pets_mod = PyMark::Unpack("pets_two.pmk");
+  PyMark::PyMarkObject* cath = pets_mod->Get("pets")->Get("catherine");
   
   printf("TypeID: %i\n", cath->Get("type")->AsInt());
   printf("Name: %s\n", cath->Get("name")->AsString());
@@ -186,12 +179,26 @@ int main(int argc, char** argv) {
                                   cath->Get("color")->At(1)->AsInt(), 
                                   cath->Get("color")->At(2)->AsInt());
   
-  delete pets;
+  delete pets_mod;
   
   return 0;
 }
-
 ```
 
-Hopefully more languages supported soon...
+Python
+------
+
+As clearly nicest in Python as the objects more or less go in and out unchanged.
+
+```python
+import pymark.unpacker
+
+pets_mod = pymark.unpacker.unpack_file("pets_two.pmk")
+
+print "TypeID: %i" % pets_mod["pets"]["catherine"]["type"]
+print "Name: %s" % pets_mod["pets"]["catherine"]["name"]
+print "Color: (%i, %i, %i)" % pets_mod["pets"]["catherine"]["color"]
+```
+
+
 

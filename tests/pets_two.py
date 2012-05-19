@@ -20,7 +20,7 @@ Colors = struct(
 
 """ Module """
 
-pets_two = module(
+pets = module(
   
   benny = pet(
     type = Types.Dog,

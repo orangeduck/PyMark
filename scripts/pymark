@@ -16,16 +16,17 @@ args = parser.parse_args()
 module = imp.load_source('__pymark__', args.module[0])
 module_object = os.path.splitext(os.path.basename(args.module[0]))[0]
 
-output_object = module.__dict__[module_object]
+output_dict = module.__dict__
+del output_dict["__builtins__"]
 
 if args.out:
-    pymark.packer.pack_file(args.out, output_object)
+    pymark.packer.pack_file(args.out, output_dict)
 else:
     
     if sys.platform == "win32":
         import os, msvcrt
         msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
     
-    pymark.packer.pack_stream(sys.stdout, output_object)
+    pymark.packer.pack_stream(sys.stdout, output_dict)
 
 
