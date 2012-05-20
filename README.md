@@ -119,6 +119,8 @@ For access in an application I have tried to make the API fairly simplistic and 
 
 Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. Saying that it doesn't have to be as obtuse as some XML or highly structured APIs.
 
+Feedback is more than welcome on any of these.
+
 C
 -
 
@@ -127,7 +129,7 @@ In C you can do something like this.
 ```c
 #include <stdio.h>
 
-#include "../parsers/PyMark.h"
+#include "../pymark/parsers/PyMark.h"
 
 int main(int argc, char** argv) {
   
@@ -150,12 +152,12 @@ int main(int argc, char** argv) {
 C++
 ---
 
-In C++ the parser has somewhat nicer syntax as you don't have to pass in the implicit self. This means you can chain together accesses nicely E.G ``` pets_two->Get("pets")->Get("catherine")->Get("type")  ```, or you can still use the dotted syntax and the function will tokenize the components for you.
+In C++ the parser has somewhat nicer syntax as you don't have to pass in the implicit self. This means you can chain together accesses nicely E.G ``` pets_two->Get("pets")->Get("catherine")->Get("type");  ```, or you can still use the dotted syntax and the function will tokenize the components for you.
 
 ```c++
 #include <stdio.h>
 
-#include "../parsers/PyMark.hpp"
+#include "../pymark/parsers/PyMark.hpp"
 
 int main(int argc, char** argv) {
   
@@ -190,5 +192,28 @@ print "Name: %s" % pets_mod["pets"]["catherine"]["name"]
 print "Color: (%i, %i, %i)" % pets_mod["pets"]["catherine"]["color"]
 ```
 
+Java
+----
 
+```java
+import java.io.IOException;
+
+class test4 {
+  
+  public static void main(String[] args) throws IOException {
+    
+    PyMarkObject pets_two = PyMarkObject.Unpack("pets_two.pmk");
+    
+    System.out.printf("TypeID: %d\n", pets_two.get("pets.catherine.type").asInt()); 
+    System.out.printf("Name: %s\n", pets_two.get("pets.catherine.name").asString());
+    
+    PyMarkObject color = pets_two.get("pets.catherine.color");
+    System.out.printf("Color: (%d, %d, %d)\n", color.at(0).asInt(),
+                                               color.at(1).asInt(),
+                                               color.at(2).asInt());
+    
+  }
+
+}
+```
 
