@@ -124,6 +124,17 @@ namespace PyMark {
 			return 0;
 		}
 		
+    if (strlen(key) >= 511) {
+      fprintf(stderr, "Error: PyMark dict key too long.\n");
+      return 0;
+    }
+		
+    char tokenize[512];
+    strcpy(tokenize, key);
+    
+    char* token = strtok(tokenize, ".");
+    char* next = strtok(NULL, ".");
+		
 		for(int64_t i = 0; i < Length(); i++) {
 
 			PyMarkObject* pair = At(i);
@@ -140,8 +151,12 @@ namespace PyMark {
 				return 0;
 			}
 
-			if (strcmp(pair_key->AsString(), key) == 0) {
-				return pair_value;
+			if (strcmp(pair_key->AsString(), token) == 0) {
+        if (next == NULL) {
+          return pair_value; 
+        } else {
+          return pair_value->Get(key + strlen(token) + 1);
+        }
 			}
 		}
 
@@ -164,6 +179,10 @@ namespace PyMark {
 		return Get((char*)key);
 	}
 	
+	PyMarkObject* UnpackObject(std::ifstream& f) {
+	  return new PyMarkObject(f);
+	}
+	
 	PyMarkObject* Unpack(const char* filename) {
 		
 		std::ifstream f;
@@ -178,14 +197,14 @@ namespace PyMark {
 		f.read(&version, 1);
 		if (version != 1) { return 0; }
 		
-		PyMarkObject* o = new PyMarkObject(f);
+		PyMarkObject* o = UnpackObject(f);
 		
 		f.close();
 		
 		return o;
 	}
 	
-	static void PackObject(std::ofstream& f, PyMarkObject* o) {
+	void PackObject(std::ofstream& f, PyMarkObject* o) {
 		
 		PyMarkType type = o->Type();
 		f.write((char*)&type, 1);

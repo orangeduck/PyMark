@@ -73,9 +73,12 @@ namespace PyMark {
 		PyMarkObject* operator[](const char* key);
 		
 	};
-
+  
 	PyMarkObject* Unpack(const char* filename);
 	void Pack(const char* filename, PyMarkObject* o);
+
+  PyMarkObject* UnpackObject(std::ifstream& f);
+  void PackObject(std::ofstream& f, PyMarkObject* o);
 
 };
 

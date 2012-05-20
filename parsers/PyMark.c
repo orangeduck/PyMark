@@ -22,6 +22,17 @@ static PyMarkObject* PyMarkList_At(PyMarkObject* self, int64_t i) {
 
 static PyMarkObject* PyMarkDict_Get(PyMarkObject* self, char* key) {
   
+  if (strlen(key) >= 511) {
+    fprintf(stderr, "Error: PyMark dict key too long.\n");
+    return NULL;
+  }
+  
+  char tokenize[512];
+  strcpy(tokenize, key);
+  
+  char* token = strtok(tokenize, ".");
+  char* next = strtok(NULL, ".");
+  
   if (self->type != PyMarkDictType) {
     return NULL;
   }
@@ -42,15 +53,20 @@ static PyMarkObject* PyMarkDict_Get(PyMarkObject* self, char* key) {
       return NULL;
     }
     
-    if (strcmp(pair_key->as_string, key) == 0) {
-      return pair_value;
+    if (strcmp(pair_key->as_string, token) == 0) {
+      if (next == NULL) {
+        return pair_value; 
+      } else {
+        return PyMarkDict_Get(pair_value, key + strlen(token) + 1);
+      }
     }
+    
   }
   
   return NULL;
 }
 
-static PyMarkObject* PyMark_UnPackObject(FILE* f) {
+PyMarkObject* PyMark_UnPackObject(FILE* f) {
   
   PyMarkObject* out = malloc(sizeof(PyMarkObject));
   if (out == NULL) {
@@ -135,7 +151,7 @@ PyMarkObject* PyMark_Unpack(char* filename) {
   
 }
 
-static void PyMark_PackObject(FILE* f, PyMarkObject* o) {
+void PyMark_PackObject(FILE* f, PyMarkObject* o) {
   
   fwrite(&o->type, 1, 1, f);
   
