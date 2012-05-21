@@ -1,4 +1,4 @@
-#!C:\Python27\python.exe
+#!/usr/bin/env python
 
 import os
 import sys

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!C:\Python27\python.exe
 
 import os
 import sys
@@ -9,7 +9,7 @@ import pymark.packer
 
 parser = argparse.ArgumentParser(description='Create PyMark binaries')
 parser.add_argument('module', nargs=1, help='Input Python file')
-parser.add_argument('-o', '--out', metavar="output", help='Optional output binary filename. If not provided binary data is written to stdout.')
+parser.add_argument('output', nargs=1, help='Output PyMark file')
 
 args = parser.parse_args()
 
@@ -19,14 +19,6 @@ module_object = os.path.splitext(os.path.basename(args.module[0]))[0]
 output_dict = module.__dict__
 del output_dict["__builtins__"]
 
-if args.out:
-    pymark.packer.pack_file(args.out, output_dict)
-else:
-    
-    if sys.platform == "win32":
-        import os, msvcrt
-        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-    
-    pymark.packer.pack_stream(sys.stdout, output_dict)
+pymark.packer.pack_file(args.output[0], output_dict)
 
 

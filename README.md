@@ -112,7 +112,7 @@ Application
 Once you have written the module just feed it into pymark.
 
 ```bash
-pymark pets_two.py > pets_two.pmk
+pymark pets_two.py pets_two.pmk
 ```
 
 For access in an application I have tried to make the API fairly simplistic and clear.

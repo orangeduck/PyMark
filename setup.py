@@ -10,7 +10,7 @@ setup(name='PyMark',
       url='https://github.com/orangeduck/PyMark',
       packages=['pymark'],
       package_data={'pymark': ['parsers/*']},
-      scripts=['scripts/pymark'],
+      scripts=['scripts/pymark.py'],
       license="BSD",
       data_files=[("doc", ["README.md", "LICENSE.md"])]
     )

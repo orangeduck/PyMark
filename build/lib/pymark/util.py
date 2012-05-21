@@ -1,19 +1,20 @@
+""" Utilities for structuring and marking up data in PyMark """
 
-class module(dict):
+class struct(dict):
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
         
     def __getattr__(self, attr):
         return self[attr]
     
-class struct(module): pass
-class properties(module): pass
+class module(struct): pass
+class properties(struct): pass
 
-class enum(module):
+class enum(struct):
     def __init__(self, *args):
         for i, x in enumerate(args): self[x] = i
         
-class flags(module):
+class flags(struct):
     def __init__(self, *args):
         for i, x in enumerate(args): self[x] = 2**i
 

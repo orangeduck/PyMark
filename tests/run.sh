@@ -1,6 +1,6 @@
-pymark clothing.py > clothing.pmk
-pymark pets_one.py > pets_one.pmk
-pymark pets_two.py > pets_two.pmk
+pymark clothing.py clothing.pmk
+pymark pets_one.py pets_one.pmk
+pymark pets_two.py pets_two.pmk
 
 gcc --std=gnu99 -Wall -Werror -g test0.c ../pymark/parsers/PyMark.c -o test0
 gcc --std=gnu99 -Wall -Werror -g test1.c ../pymark/parsers/PyMark.c -o test1
