@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 from distutils.core import setup
 
@@ -10,7 +9,7 @@ setup(name='PyMark',
       url='https://github.com/orangeduck/PyMark',
       packages=['pymark'],
       package_data={'pymark': ['parsers/*']},
-      scripts=['scripts/pymark.py'],
+      scripts=['scripts/pymark'],
       license="BSD",
       data_files=[("doc", ["README.md", "LICENSE.md"])]
     )
