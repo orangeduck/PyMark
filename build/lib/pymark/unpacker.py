@@ -54,10 +54,7 @@ def unpack_object(f):
         return [unpack_object(f) for i in range(0, size)]
     if type == PyMarkDict:
         size = unpack('q', f.read(8))[0]
-        pairs = [unpack_object(f) for i in range(0, size)]
-        dict = {}
-        for k, v in pairs: dict[k] = v
-        return dict
+        return dict([unpack_object(f) for i in range(0, size)])
     else:
         raise IOError("Badly formed PyMark stream. Unknown type id %i", type)
         
