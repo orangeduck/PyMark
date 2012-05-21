@@ -1,5 +1,3 @@
-#!C:\Python27\python.exe
-
 import os
 import sys
 import imp
@@ -12,6 +10,7 @@ parser.add_argument('module', nargs=1, help='Input Python file')
 parser.add_argument('output', nargs=1, help='Output PyMark file')
 
 args = parser.parse_args()
+print args
 
 module = imp.load_source('__pymark__', args.module[0])
 module_object = os.path.splitext(os.path.basename(args.module[0]))[0]

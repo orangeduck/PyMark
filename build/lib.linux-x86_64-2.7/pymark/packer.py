@@ -15,17 +15,14 @@ PyMarkDict    = 10
 
 PyMarkVersion = 1
 
+
 def pack_file(filename, o):
     f = open(filename, 'wb')
-    pack_stream(f, o)
+    f.write("PYMARK")
+    f.write(pack("<B", PyMarkVersion))
+    pack_object(f, o)
     f.close()
 
-
-def pack_stream(f, o):
-    f.write("PYMARK")
-    f.write(pack("<B", 1))
-    pack_object(f, o)
-    
     
 def pack_object(f, o):
     
