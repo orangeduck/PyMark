@@ -5,15 +5,18 @@ module PyMark where
 import Data.Binary.Get
 import Data.Binary.Put
 import Data.Binary.IEEE754
-import Data.ByteString.Lazy (ByteString, hGetContents)
+import Data.ByteString.Lazy (ByteString, hGetContents, hPut)
 import Data.Word
 import Data.Char
+import Data.List
 import Data.List.Split
 
 import Text.Printf
 import System.IO hiding (hGetContents)
 import Control.Monad
 
+
+-- Type indicies
 pyMarkIntType    = 1
 pyMarkLongType   = 2
 pyMarkFloatType  = 3
@@ -25,121 +28,185 @@ pyMarkTupleType  = 8
 pyMarkListType   = 9
 pyMarkDictType   = 10
 
+
+-- Could have used 'Nothing' but defining a new type seemed easier
 data NoneType = None deriving (Show, Eq)
 
+
+-- Represents a type which can be serialized or deserialized
 class PyMarkAble a where
   
-  pyMarkType :: a -> Int
-  pyMarkTypeError :: a -> String -> b
-  pyMarkTypeError x t = error $ "PyMark Object of TypeID " ++ show (pyMarkType x) ++ " is not a " ++ t
+  -- Class functions
+  typeId :: a -> Int
+  typeLength :: a -> Int
+  typeCastError :: String -> a -> b
   
-  pyMarkAt :: a -> Int -> PyMarkObject
-  pyMarkGet :: a -> String -> PyMarkObject
-  pyMarkGet' :: a -> [String] -> PyMarkObject
+  (!) :: a -> Int -> PyMarkObject
+  (!#) :: a -> String -> PyMarkObject
   
-  pyMarkAt x i = pyMarkTypeError x "List"
-  pyMarkGet x s = pyMarkTypeError x "Dict"
-  pyMarkGet' x s = pyMarkTypeError x "Dict"
+  asInt :: a -> Int
+  asLong :: a -> Integer
+  asFloat :: a -> Float
+  asDouble :: a -> Double
+  asBool :: a -> Bool
+  asNone :: a -> NoneType
+  asString :: a -> String
+  asList :: a -> [PyMarkObject]
   
-  pyMarkAsInt :: a -> Int
-  pyMarkAsLong :: a -> Integer
-  pyMarkAsFloat :: a -> Float
-  pyMarkAsDouble :: a -> Double
-  pyMarkAsBool :: a -> Bool
-  pyMarkAsNone :: a -> NoneType
-  pyMarkAsString :: a -> String
+  -- Defaults
+  typeLength = typeCastError "List"
+  typeCastError t x = error $ "PyMark Object of TypeID " ++ show (typeId x) ++ " is not a " ++ t
   
-  pyMarkAsInt x = pyMarkTypeError x "Int"
-  pyMarkAsLong x = pyMarkTypeError x "Long"
-  pyMarkAsFloat x = pyMarkTypeError x "Float"
-  pyMarkAsDouble x = pyMarkTypeError x "Double"
-  pyMarkAsBool x = pyMarkTypeError x "Bool"
-  pyMarkAsNone x = pyMarkTypeError x "None"
-  pyMarkAsString x = pyMarkTypeError x "String"
+  (!) x i = typeCastError "List" x
+  (!#) x k = typeCastError "Dict" x
+  
+  asInt = typeCastError "Int"
+  asLong = typeCastError "Long"
+  asFloat = typeCastError "Float"
+  asDouble = typeCastError "Double"
+  asBool = typeCastError "Bool"
+  asNone = typeCastError "None"
+  asString = typeCastError "String"
+  asList = typeCastError "List"
 
-instance PyMarkAble Int where { pyMarkType x = pyMarkIntType; pyMarkAsInt = id }
-instance PyMarkAble Integer  where { pyMarkType x = pyMarkLongType; pyMarkAsLong = id }
-instance PyMarkAble Float where { pyMarkType x = pyMarkFloatType; pyMarkAsFloat = id }
-instance PyMarkAble Double where { pyMarkType x = pyMarkDoubleType; pyMarkAsDouble = id }
-instance PyMarkAble Bool where { pyMarkType x = pyMarkBoolType; pyMarkAsBool = id }
-instance PyMarkAble NoneType where { pyMarkType x = pyMarkNoneType; pyMarkAsNone = id }
-instance PyMarkAble String where { pyMarkType x = pyMarkStringType; pyMarkAsString = id }
-instance PyMarkAble [PyMarkObject] where
-  pyMarkType x = pyMarkListType
-  pyMarkAt x i = x !! i
   
-  pyMarkGet x s = pyMarkGet' x (splitOn "." s)
-  
-  pyMarkGet' x [] = PyMarkObject x
-  pyMarkGet' x [s] = (head [ps ! 1 | ps <- x, (asString (ps ! 0)) == s ])
-  pyMarkGet' x (s:ss) = (head [ps ! 1 | ps <- x, (asString (ps ! 0)) == s ]) !!-> ss
-  
-  
+-- Existential Type for PyMarkAble Objects
 data PyMarkObject where PyMarkObject :: (PyMarkAble a, Show a) => a -> PyMarkObject
-
-(!) :: PyMarkObject -> Int -> PyMarkObject
-(!) (PyMarkObject p) i = pyMarkAt p i
-
-(!->) :: PyMarkObject -> String -> PyMarkObject
-(!->) (PyMarkObject p) s = pyMarkGet p s
-
-(!!->) :: PyMarkObject -> [String] -> PyMarkObject
-(!!->) (PyMarkObject p) s = pyMarkGet' p s
-
-asInt (PyMarkObject p) = pyMarkAsInt p
-asLong (PyMarkObject p) = pyMarkAsLong p
-asFloat (PyMarkObject p) = pyMarkAsFloat p
-asDouble (PyMarkObject p) = pyMarkAsDouble p
-asBool (PyMarkObject p) = pyMarkAsBool p
-asNone (PyMarkObject p) = pyMarkAsNone p
-asString (PyMarkObject p) = pyMarkAsString p
-
 instance Show PyMarkObject where show (PyMarkObject p) = show p
+instance PyMarkAble PyMarkObject where
+  typeId (PyMarkObject p) = typeId p
+  typeLength (PyMarkObject p) = typeLength p
+  (!) (PyMarkObject p) i = p ! i
+  (!#) (PyMarkObject p) k = p !# k
+  asInt (PyMarkObject p) = asInt p
+  asLong (PyMarkObject p) = asLong p
+  asFloat (PyMarkObject p) = asFloat p
+  asDouble (PyMarkObject p) = asDouble p
+  asBool (PyMarkObject p) = asBool p
+  asNone (PyMarkObject p) = asNone p
+  asString (PyMarkObject p) = asString p
+  asList (PyMarkObject p) = asList p
+  
+  
+-- Instances for basic types
+instance PyMarkAble Int where { typeId = const pyMarkIntType; asInt = id }
+instance PyMarkAble Integer  where { typeId = const pyMarkLongType; asLong = id }
+instance PyMarkAble Float where { typeId = const pyMarkFloatType; asFloat = id }
+instance PyMarkAble Double where { typeId = const pyMarkDoubleType; asDouble = id }
+instance PyMarkAble Bool where { typeId = const pyMarkBoolType; asBool = id }
+instance PyMarkAble NoneType where { typeId = const pyMarkNoneType; asNone = id }
 
+instance PyMarkAble String where 
+  typeId = const pyMarkStringType
+  typeLength = length
+  asString = id
+  
+instance PyMarkAble [PyMarkObject] where
+  typeId = const pyMarkListType
+  typeLength = length
+  asList = id
+  (!) x i = x !! i
+  (!#) x s = if length (rest s) == 0 then (lookup x (first s))
+             else (lookup x (first s)) !# (intercalate "." (rest s)) 
+    where first s = head (splitOn "." s)
+          rest s = tail (splitOn "." s)
+          lookup x s = head [ps!1 | ps <- x, asString (ps!0) == s ]
+  
+  
+-- Unpacks a collection object
 pyMarkUnpackList :: Get PyMarkObject
 pyMarkUnpackList = do
   len <- getWord64le
   objs <- replicateM (fromIntegral len) pyMarkUnpackObject
   return $ PyMarkObject objs
 
+  
+-- Unpacks an object of a specified type index
 pyMarkUnpackType :: Int -> Get PyMarkObject
 pyMarkUnpackType t
-  |t == pyMarkIntType = do { x <- getWord32le; return $ PyMarkObject (fromIntegral x :: Int) }
-  |t == pyMarkLongType = do { x <- getWord64le; return $ PyMarkObject (fromIntegral x :: Integer) }
-  |t == pyMarkFloatType = do { x <- getFloat32le; return $ PyMarkObject x }
-  |t == pyMarkDoubleType = do { x <- getFloat64le; return $ PyMarkObject x }
-  |t == pyMarkBoolType = do
-    x <- getWord8; if (fromIntegral x :: Int) == 0 
-                   then return (PyMarkObject True)
-                   else return (PyMarkObject False)
-  |t == pyMarkNoneType = return $ PyMarkObject None
-  |t == pyMarkStringType = do
-    len <- getWord64le
-    words <- replicateM (fromIntegral len) getWord8
-    return $ PyMarkObject (map (\x -> chr (fromIntegral x)) words)
-  |t == pyMarkTupleType = pyMarkUnpackList
-  |t == pyMarkListType = pyMarkUnpackList
-  |t == pyMarkDictType = pyMarkUnpackList
-  |otherwise = error $ "Unknown PyMark TypeID" ++ show t
+  | pyMarkIntType    == t = do { x <- getWord32le; return $ PyMarkObject (fromIntegral x :: Int) }
+  | pyMarkLongType   == t = do { x <- getWord64le; return $ PyMarkObject (fromIntegral x :: Integer) }
+  | pyMarkFloatType  == t = do { x <- getFloat32le; return $ PyMarkObject x }
+  | pyMarkDoubleType == t = do { x <- getFloat64le; return $ PyMarkObject x }
+  | pyMarkBoolType   == t = do
+      x <- getWord8
+      if (fromIntegral x) == 0 
+      then return (PyMarkObject True)
+      else return (PyMarkObject False)
   
+  | pyMarkNoneType   == t = return $ PyMarkObject None
+  | pyMarkStringType == t = do
+      len <- getWord64le
+      words <- replicateM (fromIntegral len) getWord8
+      return $ PyMarkObject (map (chr . fromIntegral) words)
+  
+  | pyMarkTupleType == t = pyMarkUnpackList
+  | pyMarkListType  == t = pyMarkUnpackList
+  | pyMarkDictType  == t = pyMarkUnpackList
+  
+  | otherwise = error $ "Unknown PyMark TypeID" ++ show t
+  
+  
+-- Reads type information and unpacks specified type
 pyMarkUnpackObject :: Get PyMarkObject
-pyMarkUnpackObject = do
-  t <- getWord8
-  pyMarkUnpackType ((fromIntegral t) :: Int)
-  
+pyMarkUnpackObject = getWord8 >>= pyMarkUnpackType . fromIntegral
+
+
+-- Unpacks Object from filename
 pyMarkUnpack :: FilePath -> IO PyMarkObject
 pyMarkUnpack file = do
   hndl <- openBinaryFile file ReadMode
+  
   magic <- replicateM 6 (hGetChar hndl)
-  if magic /= "PYMARK" then return $ error "Bad magic number for file" else return ()
+  if magic /= "PYMARK" 
+  then ioError (userError "Bad magic number for file")
+  else return ()
+  
   version <- hGetChar hndl
-  if version /= (chr 1) then return $ error "Bad version number for file" else return ()
+  if version /= (chr 1)
+  then ioError (userError "Bad version number for file")
+  else return ()
+  
   bs <- hGetContents hndl
-  obj <- return $ runGet pyMarkUnpackObject bs
-  return obj
+  return $ runGet pyMarkUnpackObject bs
 
-pyMarkPackObject :: Put
-pyMarkPackObject = undefined
-
+  
+-- Packs a list type
+pyMarkPackList :: PyMarkObject -> Put
+pyMarkPackList obj = do
+  putWord64le $ (fromIntegral . typeLength) obj
+  mapM_ pyMarkPackObject $ asList obj
+  
+-- Given a type index packs that type object
+pyMarkPackType :: Int -> PyMarkObject -> Put
+pyMarkPackType t obj
+  | pyMarkIntType    == t = putWord32le $ (fromIntegral . asInt) obj
+  | pyMarkLongType   == t = putWord64le $ (fromIntegral . asLong) obj
+  | pyMarkFloatType  == t = putFloat32le $ (asFloat obj)
+  | pyMarkDoubleType == t = putFloat64le $ (asDouble obj)
+  | pyMarkBoolType   == t = if (asBool obj) then putWord8 1 else putWord8 0
+  | pyMarkNoneType   == t = return ()
+  | pyMarkStringType == t = do
+      putWord64le $ (fromIntegral . typeLength) obj
+      mapM_ (\x -> putWord8 $ (fromIntegral . ord) x) (asString obj)
+  | pyMarkTupleType == t = pyMarkPackList obj
+  | pyMarkListType  == t = pyMarkPackList obj
+  | pyMarkDictType  == t = pyMarkPackList obj
+  | otherwise = error $ "Unknown PyMark TypeID" ++ show t
+  
+  
+-- Packs a PyMarkObject
+pyMarkPackObject :: PyMarkObject -> Put
+pyMarkPackObject obj = do
+  putWord8 $ fromIntegral (typeId obj)
+  pyMarkPackType (typeId obj) obj
+  
+  
+-- Packs a PyMarkObject into a file
 pyMarkPack :: FilePath -> PyMarkObject -> IO ()
-pyMarkPack file obj = undefined
+pyMarkPack file obj = do
+  hndl <- openBinaryFile file WriteMode
+  hPutStr hndl "PYMARK"
+  hPutChar hndl (chr 1)
+  hPut hndl $ runPut (pyMarkPackObject obj)
+  hClose hndl
