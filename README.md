@@ -220,7 +220,7 @@ class test4 {
 Haskell
 -------
 
-```
+```haskell
 import Text.Printf
 
 import PyMark
