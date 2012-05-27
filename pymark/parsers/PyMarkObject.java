@@ -50,6 +50,7 @@ public class PyMarkObject {
     if (isCollection()) {
       return ((PyMarkObject[])mData).length;
     } else {
+      System.out.println("Returning -1");
       return -1;
     }
   }
@@ -137,7 +138,7 @@ public class PyMarkObject {
   public static PyMarkObject Unpack(String filename) throws IOException {
     FileChannel channel = new FileInputStream(filename).getChannel();
     
-    ByteBuffer bb = ByteBuffer.allocate((int)channel.size());
+    ByteBuffer bb = ByteBuffer.allocateDirect((int)channel.size());
     bb.order(ByteOrder.LITTLE_ENDIAN);
     
     channel.read(bb);
@@ -159,12 +160,77 @@ public class PyMarkObject {
     return obj;
   }
   
-  public static void PackObject(ByteBuffer bb, PyMarkObject o) {
-  
+  public static void PackObject(ByteBuffer bb, PyMarkObject o) throws IOException {
+    
+    bb.put(o.type());
+    
+    switch(o.type()) {
+      case PyMarkIntType: bb.putInt(o.asInt()); break;
+      case PyMarkLongType: bb.putLong(o.asLong()); break;
+      case PyMarkFloatType: bb.putFloat(o.asFloat()); break;
+      case PyMarkDoubleType: bb.putDouble(o.asDouble()); break;
+      case PyMarkBoolType: if (o.asBool()) { bb.put((byte)1); } else { bb.put((byte)0); } break;
+      case PyMarkNoneType: break;
+      case PyMarkStringType:
+        bb.putLong((long) o.asString().length());
+        for(int i = 0; i < o.asString().length(); i++) {
+          byte b = (byte)o.asString().charAt(i);
+          bb.put(b);
+        }
+      break;
+      case PyMarkListType:
+      case PyMarkTupleType:
+      case PyMarkDictType:
+        bb.putLong((long)o.length());
+        for(int i = 0; i < o.length(); i++) {
+          PackObject(bb, o.at(i));
+        }
+      break;
+      default: throw new IOException("Unknown typeId " + (int)o.type());
+    }
+    
   }
   
-  public static void Pack(String filename, PyMarkObject o) {
+  private static int ObjectSize(PyMarkObject o) throws IOException {
+    switch(o.type()) {
+      case PyMarkIntType: return 1 + 4;
+      case PyMarkLongType: return 1 + 8;
+      case PyMarkFloatType: return 1 + 4;
+      case PyMarkDoubleType: return 1 + 8;
+      case PyMarkBoolType: return 1 + 1;
+      case PyMarkNoneType: return 1;
+      case PyMarkStringType:
+        return 1 + 8 + (o.asString().length());
+      case PyMarkListType:
+      case PyMarkTupleType:
+      case PyMarkDictType:
+        int total = 1 + 8;
+        for (int i = 0; i < o.length(); i++) {
+          total += ObjectSize(o.at(i));
+        }
+        return total;
+        default: throw new IOException("Unknown typeId " + (int)o.type());
+    }
+  }
   
+  public static void Pack(String filename, PyMarkObject o) throws IOException {
+    
+    FileChannel channel = new FileOutputStream(filename).getChannel(); 
+    
+    ByteBuffer bb = ByteBuffer.allocateDirect(6 + 1 + ObjectSize(o));
+    bb.order(ByteOrder.LITTLE_ENDIAN);
+    
+    byte[] magic = {'P','Y','M','A','R','K'};
+    byte version = 1;
+    bb.put(magic);
+    bb.put(version);
+    
+    PackObject(bb, o);
+    
+    bb.rewind();
+    
+    channel.write(bb);
+    channel.close();
   }
   
 }

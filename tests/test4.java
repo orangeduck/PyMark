@@ -13,7 +13,7 @@ class test4 {
     System.out.printf("Color: (%d, %d, %d)\n", color.at(0).asInt(),
                                                color.at(1).asInt(),
                                                color.at(2).asInt());
-    
+  
   }
 
 }
