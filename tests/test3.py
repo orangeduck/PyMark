@@ -1,6 +1,6 @@
-import pymark.unpacker
+import pymark
 
-pets_mod = pymark.unpacker.unpack_file("pets_two.pmk")
+pets_mod = pymark.unpack_file("pets_two.pmk")
 
 print "TypeID: %i" % pets_mod["pets"]["catherine"]["type"]
 print "Name: %s" % pets_mod["pets"]["catherine"]["name"]

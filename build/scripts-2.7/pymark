@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!C:\Python27\python.exe
 
 import os
 import sys
 import imp
 import argparse
 
-import pymark.packer
+import pymark
 
 parser = argparse.ArgumentParser(description='Create PyMark binaries')
 parser.add_argument('module', nargs=1, help='Input Python file')
@@ -19,6 +19,6 @@ module_object = os.path.splitext(os.path.basename(args.module[0]))[0]
 output_dict = module.__dict__
 del output_dict["__builtins__"]
 
-pymark.packer.pack_file(args.output[0], output_dict)
+pymark.pack_file(args.output[0], output_dict)
 
 

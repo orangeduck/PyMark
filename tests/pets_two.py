@@ -1,6 +1,6 @@
 """ My Favourite Pets - Another example """
 
-from pymark.util import enum, module, struct
+from pymark import enum, module, struct
 
 """ Constants """
 

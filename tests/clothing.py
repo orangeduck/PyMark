@@ -1,6 +1,6 @@
 """ Clothing Objects for Game """
 
-from pymark.util import flags, enum, module, properties, modifiers
+from pymark import flags, enum, module, properties, modifiers
 
 Avaliable = flags("Merchandise", "Reward", "Bonus", "Secret")
 Location = enum("BodyArmor", "Helmets", "Gloves", "Boots")

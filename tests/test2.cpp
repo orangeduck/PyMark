@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "../pymark/parsers/PyMark.hpp"
+#include "../parsers/PyMark.hpp"
 
 int main(int argc, char** argv) {
   

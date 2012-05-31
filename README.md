@@ -62,7 +62,7 @@ But having Python allows you to be much more expressive. You can adjust the data
 ```python
 """ My Favourite Pets - Another example """
 
-from pymark.util import enum, module, struct
+from pymark import enum, module, struct
 
 """ Constants """
 
@@ -117,14 +117,12 @@ pymark pets_two.py pets_two.pmk
 
 For access in an application I have tried to make the API fairly simplistic and clear.
 
-Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. Saying that it doesn't have to be as obtuse as some XML or highly structured APIs.
+Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. Saying that it doesn't have to be as obtuse as some XML or highly structured APIs. Feedback is more than welcome on any of these.
 
-Feedback is more than welcome on any of these.
+The reason there are so many supported languages is that I've found writing data parsers for PyMark is a really good way to learn a new language. It can be written in a only a few lines of code and almost always highlights all the important issues such as the type system, library use, low level ability, recursion/looping, and clear API methologies and is more fun than language tutorials!
 
 C
 -
-
-In C you can do something like this.
 
 ```c
 #include <stdio.h>
@@ -151,8 +149,6 @@ int main(int argc, char** argv) {
 
 C++
 ---
-
-In C++ the parser has somewhat nicer syntax as you don't have to pass in the implicit self. This means you can chain together accesses nicely E.G ``` pets_two->Get("pets")->Get("catherine")->Get("type");  ```, or you can still use the dotted syntax and the function will tokenize the components for you.
 
 ```c++
 #include <stdio.h>
@@ -183,9 +179,9 @@ Python
 Access is nicest in Python as the objects more or less go in and out unchanged.
 
 ```python
-import pymark.unpacker
+import pymark
 
-pets_mod = pymark.unpacker.unpack_file("pets_two.pmk")
+pets_mod = pymark.unpack_file("pets_two.pmk")
 
 print "TypeID: %i" % pets_mod["pets"]["catherine"]["type"]
 print "Name: %s" % pets_mod["pets"]["catherine"]["name"]
@@ -235,3 +231,17 @@ main = do
   printf "Color: (%i, %i, %i)\n" (asInt $ color ! 0) (asInt $ color ! 1) (asInt $ color ! 2)
 ```
 
+Clojure
+-------
+
+```clojure
+(use 'pymark)
+
+(let [pets-two (pymark-unpack "pets_two.pmk")]
+  (do
+    (printf "TypeID: %d\n" (get-in pets-two ["pets" "catherine" "type"]))
+    (printf "Name: %s\n" (get-in pets-two ["pets" "catherine" "name"]))
+    
+    (let [color (get-in pets-two ["pets" "catherine" "color"])]
+      (printf "Color: (%d, %d, %d)\n" (nth color 0) (nth color 1) (nth color 2))) ))
+```
