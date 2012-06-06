@@ -21,3 +21,4 @@ python test3.py
 java -classpath ./:../parsers/ test4
 ./test5
 java -cp "C:\Program Files (x86)\clojure-1.4.0\clojure-1.4.0.jar;../parsers/" clojure.main test6.clj
+lua test7.lua

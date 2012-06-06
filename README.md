@@ -119,7 +119,7 @@ For access in an application I have tried to make the API fairly simplistic and 
 
 Loading data at runtime and making it easy to access in a type safe language is always going to be horrible. It is one of the major issues with doing object markup in a separate language and there is little way around it. Saying that it doesn't have to be as obtuse as some XML or highly structured APIs. Feedback is more than welcome on any of these.
 
-The reason there are so many supported languages is that I've found writing data parsers for PyMark is a really good way to learn a new language. It can be written in a only a few lines of code and almost always highlights all the important issues such as the type system, library use, low level ability, recursion/looping, and clear API methologies and is more fun than language tutorials!
+The reason there are so many supported languages is that I've found writing data parsers for PyMark is a really good way to learn a new language. It can be written in a only a few lines of code and almost always highlights all the important issues such as the type system, library use, low level ability, recursion/looping, and clear API methologies. Finally it is more fun than language tutorials!
 
 C
 -
@@ -175,8 +175,6 @@ int main(int argc, char** argv) {
 
 Python
 ------
-
-Access is nicest in Python as the objects more or less go in and out unchanged.
 
 ```python
 import pymark
@@ -245,3 +243,19 @@ Clojure
     (let [color (get-in pets-two ["pets" "catherine" "color"])]
       (printf "Color: (%d, %d, %d)\n" (nth color 0) (nth color 1) (nth color 2))) ))
 ```
+
+Lua
+---
+
+```lua
+require "PyMark"
+
+pets_two = pymark_unpack("pets_two.pmk")
+
+print(string.format("TypeID: %d", pets_two.pets.catherine.type))
+print(string.format("Name: %s", pets_two.pets.catherine.name))
+
+color = pets_two.pets.catherine.color
+print(string.format("Color: (%d, %d, %d)", color[1], color[2], color[3]))
+```
+
